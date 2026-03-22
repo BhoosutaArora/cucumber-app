@@ -9,7 +9,7 @@ export default function Home() {
         </div>
         <div className="flex items-center gap-8">
           <span className="text-sm font-medium text-gray-500 cursor-pointer hover:text-green-700 transition-colors">Explore</span>
-          <span className="text-sm font-medium text-gray-500 cursor-pointer hover:text-green-700 transition-colors">Rooms</span>
+          <a href="/rooms" className="text-sm font-medium text-gray-500 cursor-pointer hover:text-green-700 transition-colors">Rooms</a>
           <span className="text-sm font-medium text-gray-500 cursor-pointer hover:text-green-700 transition-colors">My Trips</span>
           <span className="text-sm font-medium text-gray-500 cursor-pointer hover:text-green-700 transition-colors">Profile</span>
         </div>
