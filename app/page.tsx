@@ -14,9 +14,9 @@ export default function Home() {
           <span className="text-sm font-medium text-gray-500 cursor-pointer hover:text-green-700 transition-colors">Profile</span>
         </div>
         <div className="flex items-center gap-3">
-          <button className="text-sm font-semibold text-green-700 border border-green-200 px-5 py-2 rounded-xl hover:bg-green-50 transition-all">
-            Sign in
-          </button>
+          <a href="/login" className="text-sm font-semibold text-green-700 border border-green-200 px-5 py-2 rounded-xl hover:bg-green-50 transition-all">
+  Sign in
+</a>
           <button className="text-sm font-bold text-white bg-gradient-to-r from-green-400 to-green-500 px-5 py-2 rounded-xl hover:shadow-lg hover:shadow-green-200 transition-all hover:scale-105">
             Find a Room →
           </button>
