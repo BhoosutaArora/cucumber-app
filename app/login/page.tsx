@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { Qahiri } from 'next/font/google'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -45,7 +46,7 @@ export default function Login() {
         setMessage('Welcome back! Redirecting... 🥒')
         setMessageType('success')
         setTimeout(() => {
-          window.location.href = '/'
+          window.location.href = '/dashboard' 
         }, 1500)
       }
     }
