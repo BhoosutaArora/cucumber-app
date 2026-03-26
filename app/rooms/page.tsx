@@ -6,6 +6,31 @@ import { supabase } from '../lib/supabase'
 export default function Rooms() {
   const [rooms, setRooms] = useState([])
   const [loading, setLoading] = useState(true)
+  async function handlePayment(room: any) {
+    const res = await fetch('/api/create-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount: room.price, roomName: room.name }),
+    })
+    const data = await res.json()
+
+    const options = {
+      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+      amount: data.amount,
+      currency: 'INR',
+      name: 'Cucumber Travel',
+      description: room.name,
+      order_id: data.orderId,
+      handler: function () {
+        alert('Payment successful! Welcome to ' + room.name + ' 🥒')
+      },
+      prefill: { name: '', email: '' },
+      theme: { color: '#4CAF50' },
+    }
+
+    const rzp = new (window as any).Razorpay(options)
+    rzp.open()
+  }
 
   useEffect(() => {
     async function fetchRooms() {
@@ -146,9 +171,12 @@ export default function Rooms() {
                       {pct >= 80 ? '🔥' : '🌱'} {room.status}
                     </div>
                     <div className="flex gap-2">
-                      <a href="/login" className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white text-sm font-bold hover:scale-105 transition-transform shadow-sm text-center">
-                        Join Room
-                      </a>
+                      <button
+  onClick={() => handlePayment(room)}
+  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white text-sm font-bold hover:scale-105 transition-transform shadow-sm"
+>
+  Join Room 💳
+</button>
                       <button className="px-4 py-2.5 rounded-xl border border-green-200 text-green-700 text-sm font-semibold hover:bg-green-50 transition-all">
                         Details
                       </button>
