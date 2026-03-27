@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
 export default function Rooms() {
-  const [rooms, setRooms] = useState([])
+  const [rooms, setRooms] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   async function handlePayment(room: any) {
