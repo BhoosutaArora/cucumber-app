@@ -21,9 +21,24 @@ export default function Rooms() {
       name: 'Cucumber Travel',
       description: room.name,
       order_id: data.orderId,
-      handler: function () {
-        alert('Payment successful! Welcome to ' + room.name + ' 🥒')
-      },
+      handler: async function () {
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  await fetch('/api/send-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: user?.email,
+      name: user?.email?.split('@')[0],
+      roomName: room.name,
+      destination: room.destination,
+      dates: room.dates,
+      price: room.price,
+    }),
+  })
+
+  window.location.href = '/dashboard'
+},
       prefill: { name: '', email: '' },
       theme: { color: '#4CAF50' },
     }
