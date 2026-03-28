@@ -36,7 +36,7 @@ export default function Rooms() {
             price: room.price,
           }),
         })
-        window.location.href = '/dashboard'
+        window.location.href = '/booking-confirmed'
       },
       prefill: { name: '', email: '' },
       theme: { color: '#4CAF50' },
