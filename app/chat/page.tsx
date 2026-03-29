@@ -34,18 +34,20 @@ export default function Chat() {
     fetchMessages()
 
     // Real-time subscription
-    const channel = supabase
-      .channel(`room-${roomId}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages',
-        filter: `room_id=eq.${roomId}`,
-      }, (payload) => {
-        setMessages((prev) => [...prev, payload.new])
-        scrollToBottom()
-      })
-      .subscribe()
+  const channel = supabase
+  .channel(`room-${roomId}`)
+  .on('postgres_changes', {
+    event: 'INSERT',
+    schema: 'public',
+    table: 'messages',
+    filter: `room_id=eq.${roomId}`,
+  }, (payload) => {
+    setMessages((prev) => [...prev, payload.new])
+    setTimeout(scrollToBottom, 100)
+  })
+  .subscribe((status) => {
+    console.log('Realtime status:', status)
+  })
 
     return () => { supabase.removeChannel(channel) }
   }, [user, roomId])
