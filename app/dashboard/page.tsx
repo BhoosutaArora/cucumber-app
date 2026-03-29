@@ -192,7 +192,7 @@ export default function Dashboard() {
               <div className="font-bold text-gray-900 text-sm md:text-base mb-3">Quick Actions</div>
               {[
                 { icon: '🏠', label: 'Browse Rooms', href: '/rooms' },
-                { icon: '👤', label: 'Edit Profile', href: '#' },
+                { icon: '🪪', label: 'Verify My ID', href: '/verify-id' },
                 { icon: '🔔', label: 'Notifications', href: '#' },
                 { icon: '⚙️', label: 'Settings', href: '#' },
               ].map((action) => (
