@@ -24,7 +24,7 @@ export default function Reviews() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/login'; return }
       setUser(user)
-      await fetchReviews(user.email)
+      await fetchReviews(user.email || '')
       setLoading(false)
     }
     init()
