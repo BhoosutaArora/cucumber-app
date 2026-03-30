@@ -8,9 +8,9 @@ export default function Home() {
           cucumber<span className="text-green-400">.</span>
         </div>
         <div className="hidden md:flex items-center gap-8">
-          <span className="text-sm font-medium text-gray-500 cursor-pointer hover:text-green-700 transition-colors">Explore</span>
+          <a href="/explore" className="text-sm font-medium text-gray-500 cursor-pointer hover:text-green-700 transition-colors">Explore</a>
           <a href="/rooms" className="text-sm font-medium text-gray-500 cursor-pointer hover:text-green-700 transition-colors">Rooms</a>
-          <span className="text-sm font-medium text-gray-500 cursor-pointer hover:text-green-700 transition-colors">My Trips</span>
+          <a href="/dashboard" className="text-sm font-medium text-gray-500 cursor-pointer hover:text-green-700 transition-colors">My Trips</a>
           <a href="/dashboard" className="text-sm font-medium text-gray-500 cursor-pointer hover:text-green-700 transition-colors">Dashboard</a>
         </div>
         <div className="flex items-center gap-2 md:gap-3">
