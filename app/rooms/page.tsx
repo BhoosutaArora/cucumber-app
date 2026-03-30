@@ -22,22 +22,39 @@ export default function Rooms() {
       name: 'Cucumber Travel',
       description: room.name,
       order_id: data.orderId,
-      handler: async function () {
-        const { data: { user } } = await supabase.auth.getUser()
-        await fetch('/api/send-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: user?.email,
-            name: user?.email?.split('@')[0],
-            roomName: room.name,
-            destination: room.destination,
-            dates: room.dates,
-            price: room.price,
-          }),
-        })
-        window.location.href = '/booking-confirmed'
-      },
+     handler: async function () {
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  // Send email
+  await fetch('/api/send-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: user?.email,
+      name: user?.email?.split('@')[0],
+      roomName: room.name,
+      destination: room.destination,
+      dates: room.dates,
+      price: room.price,
+    }),
+  })
+
+  // Send WhatsApp
+  await fetch('/api/send-whatsapp', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      to: '+916284838263',
+      roomName: room.name,
+      destination: room.destination,
+      dates: room.dates,
+      price: room.price,
+      type: 'booking',
+    }),
+  })
+
+  window.location.href = '/booking-confirmed'
+},
       prefill: { name: '', email: '' },
       theme: { color: '#4CAF50' },
     }
