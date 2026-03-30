@@ -93,7 +93,7 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 md:py-3 text-sm outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
+              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
             />
           </div>
 
@@ -105,7 +105,7 @@ export default function Login() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Min. 6 characters"
               onKeyDown={(e) => e.key === 'Enter' && handleAuth()}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 md:py-3 text-sm outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
+              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
             />
           </div>
 
