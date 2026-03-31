@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: 'Cucumber — Travel Rooms for Like-Minded Strangers',
   description: 'Find your tribe. Travel together. Cucumber connects you to small curated travel rooms of 8-10 people who share your exact travel vibe.',
+  icons: {
+    icon: '/favicon.ico',
+  },
 }
 
 export default function RootLayout({
