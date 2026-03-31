@@ -22,40 +22,38 @@ export default function Login() {
     setMessage('')
 
     if (isSignUp) {
-  if (!username) { setMessage('Please choose a username 🥒'); setMessageType('error'); setLoading(false); return }
-  
-  const { data, error } = await supabase.auth.signUp({ email, password })
-  if (error) { 
-    setMessage(
-      error.message.includes('already registered') || error.message.includes('already exists')
-        ? 'This email is already registered! Try signing in instead 🥒' 
-        : error.message
-    ); 
-    setMessageType('error') 
-  } else {
-    if (data.user) {
-      await supabase.from('profiles').insert({
-        id: data.user.id,
-        username: username.toLowerCase().trim(),
-        email: email,
-      })
-    }
-    setMessage('We sent a confirmation email to ' + email + ' — check your inbox and spam folder and click the link to activate your account 🥒'); 
-    setMessageType('success') 
-  }
-}
+      if (!username) { setMessage('Please choose a username 🥒'); setMessageType('error'); setLoading(false); return }
+      const { data, error } = await supabase.auth.signUp({ email, password })
+      if (error) {
+        setMessage(
+          error.message.includes('already registered') || error.message.includes('already exists')
+            ? 'This email is already registered! Try signing in instead 🥒'
+            : error.message
+        )
+        setMessageType('error')
+      } else {
+        if (data.user) {
+          await supabase.from('profiles').insert({
+            id: data.user.id,
+            username: username.toLowerCase().trim(),
+            email: email,
+          })
+        }
+        setMessage('We sent a confirmation email to ' + email + ' — check your inbox and spam folder and click the link to activate your account 🥒')
+        setMessageType('success')
+      }
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) { 
-  setMessage(
-    error.message === 'Email not confirmed' 
-      ? 'Please confirm your email first! Check your inbox and spam folder for our confirmation email 🥒' 
-      : error.message
-  ); 
-  setMessageType('error') 
-}
-      else {
-        setMessage('Welcome back! 🥒'); setMessageType('success')
+      if (error) {
+        setMessage(
+          error.message === 'Email not confirmed'
+            ? 'Please confirm your email first! Check your inbox and spam folder for our confirmation email 🥒'
+            : error.message
+        )
+        setMessageType('error')
+      } else {
+        setMessage('Welcome back! 🥒')
+        setMessageType('success')
         setTimeout(() => { window.location.href = '/dashboard' }, 1500)
       }
     }
@@ -77,7 +75,6 @@ export default function Login() {
 
       <div className="bg-white rounded-3xl shadow-xl shadow-green-100 w-full max-w-md overflow-hidden">
 
-        {/* Header */}
         <div className="bg-gradient-to-br from-green-700 to-green-500 px-6 md:px-8 py-8 md:py-10 text-center relative overflow-hidden">
           <div className="absolute inset-0 opacity-10" style={{backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px'}} />
           <a href="/" className="text-3xl md:text-4xl font-extrabold text-green-300 tracking-tight relative z-10 block">
@@ -96,7 +93,6 @@ export default function Login() {
             {isSignUp ? 'Start your travel journey today' : 'Your tribe is waiting for you'}
           </p>
 
-          {/* Google */}
           <button onClick={handleGoogle} className="w-full flex items-center justify-center gap-3 border border-gray-200 rounded-xl py-2.5 md:py-3 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all mb-4">
             <svg width="18" height="18" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -112,18 +108,20 @@ export default function Login() {
             <span className="text-xs text-gray-400 font-medium">or with email</span>
             <div className="flex-1 h-px bg-gray-100" />
           </div>
-{isSignUp && (
-  <div className="mb-3">
-    <label className="block text-xs font-bold text-gray-500 mb-1.5">Username</label>
-    <input
-      type="text"
-      value={username}
-      onChange={(e) => setUsername(e.target.value)}
-      placeholder="e.g. bhoosuta"
-      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
-    />
-  </div>
-)}
+
+          {isSignUp && (
+            <div className="mb-3">
+              <label className="block text-xs font-bold text-gray-500 mb-1.5">Username</label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="e.g. bhoosuta"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
+              />
+            </div>
+          )}
+
           <div className="mb-3">
             <label className="block text-xs font-bold text-gray-500 mb-1.5">Email address</label>
             <input
@@ -176,4 +174,3 @@ export default function Login() {
       </div>
     </main>
   )
-}
