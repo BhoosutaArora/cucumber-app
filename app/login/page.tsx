@@ -7,6 +7,7 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
+  const [username, setUsername] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [messageType, setMessageType] = useState('')
@@ -21,18 +22,27 @@ export default function Login() {
     setMessage('')
 
     if (isSignUp) {
-      const { error } = await supabase.auth.signUp({ email, password })
-      if (error) { 
-  setMessage(
-    error.message.includes('already registered') || error.message.includes('already exists')
-      ? 'This email is already registered! Try signing in instead 🥒' 
-      : error.message
-  ); 
-  setMessageType('error') 
-}
-    else { 
-  setMessage('We sent a confirmation email to ' + email + ' — check your inbox and spam folder and click the link to activate your account 🥒'); 
-  setMessageType('success') 
+  if (!username) { setMessage('Please choose a username 🥒'); setMessageType('error'); setLoading(false); return }
+  
+  const { data, error } = await supabase.auth.signUp({ email, password })
+  if (error) { 
+    setMessage(
+      error.message.includes('already registered') || error.message.includes('already exists')
+        ? 'This email is already registered! Try signing in instead 🥒' 
+        : error.message
+    ); 
+    setMessageType('error') 
+  } else {
+    if (data.user) {
+      await supabase.from('profiles').insert({
+        id: data.user.id,
+        username: username.toLowerCase().trim(),
+        email: email,
+      })
+    }
+    setMessage('We sent a confirmation email to ' + email + ' — check your inbox and spam folder and click the link to activate your account 🥒'); 
+    setMessageType('success') 
+  }
 }
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -102,7 +112,18 @@ export default function Login() {
             <span className="text-xs text-gray-400 font-medium">or with email</span>
             <div className="flex-1 h-px bg-gray-100" />
           </div>
-
+{isSignUp && (
+  <div className="mb-3">
+    <label className="block text-xs font-bold text-gray-500 mb-1.5">Username</label>
+    <input
+      type="text"
+      value={username}
+      onChange={(e) => setUsername(e.target.value)}
+      placeholder="e.g. bhoosuta"
+      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
+    />
+  </div>
+)}
           <div className="mb-3">
             <label className="block text-xs font-bold text-gray-500 mb-1.5">Email address</label>
             <input
