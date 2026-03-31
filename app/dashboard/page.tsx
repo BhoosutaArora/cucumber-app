@@ -4,19 +4,26 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
 export default function Dashboard() {
-  const [user, setUser] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-
+const [user, setUser] = useState<any>(null)
+const [username, setUsername] = useState('')
+const [loading, setLoading] = useState(true)
   useEffect(() => {
-    async function getUser() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        window.location.href = '/login'
-      } else {
-        setUser(user)
-        setLoading(false)
-      }
-    }
+   async function getUser() {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    window.location.href = '/login'
+  } else {
+    setUser(user)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('id', user.id)
+      .single()
+    if (profile?.username) setUsername(profile.username)
+    else setUsername(user.email?.split('@')[0] || 'Traveler')
+    setLoading(false)
+  }
+}
     getUser()
   }, [])
 
@@ -37,7 +44,7 @@ export default function Dashboard() {
   }
 
   const userEmail = user?.email || ''
-  const userName = userEmail.split('@')[0] || 'Traveler'
+  const userName = username || userEmail.split('@')[0] || 'Traveler'
 
   return (
     <main className="min-h-screen bg-green-50 font-sans">
