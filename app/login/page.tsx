@@ -22,11 +22,28 @@ export default function Login() {
 
     if (isSignUp) {
       const { error } = await supabase.auth.signUp({ email, password })
-      if (error) { setMessage(error.message); setMessageType('error') }
-      else { setMessage('Account created! 🎉 Sign in to continue.'); setMessageType('success') }
+      if (error) { 
+  setMessage(
+    error.message.includes('already registered') || error.message.includes('already exists')
+      ? 'This email is already registered! Try signing in instead 🥒' 
+      : error.message
+  ); 
+  setMessageType('error') 
+}
+    else { 
+  setMessage('We sent a confirmation email to ' + email + ' — check your inbox and spam folder and click the link to activate your account 🥒'); 
+  setMessageType('success') 
+}
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) { setMessage(error.message); setMessageType('error') }
+      if (error) { 
+  setMessage(
+    error.message === 'Email not confirmed' 
+      ? 'Please confirm your email first! Check your inbox and spam folder for our confirmation email 🥒' 
+      : error.message
+  ); 
+  setMessageType('error') 
+}
       else {
         setMessage('Welcome back! 🥒'); setMessageType('success')
         setTimeout(() => { window.location.href = '/dashboard' }, 1500)
