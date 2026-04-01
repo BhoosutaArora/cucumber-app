@@ -7,6 +7,9 @@ export default function Dashboard() {
 const [user, setUser] = useState<any>(null)
 const [username, setUsername] = useState('')
 const [loading, setLoading] = useState(true)
+const [showUsernameModal, setShowUsernameModal] = useState(false)
+const [newUsernameInput, setNewUsernameInput] = useState('')
+const [usernameError, setUsernameError] = useState('')
   useEffect(() => {
   async function getUser() {
   const { data: { user } } = await supabase.auth.getUser()
@@ -56,6 +59,56 @@ const [loading, setLoading] = useState(true)
   const userName = username || userEmail.split('@')[0] || 'Traveler'
 
   return (
+    {showUsernameModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
+      <div className="text-center mb-5">
+        <div className="text-3xl mb-2">🥒</div>
+        <h2 className="text-xl font-extrabold text-gray-900">Choose your username</h2>
+        <p className="text-xs text-gray-400 mt-1">Letters, numbers and underscores only. 3-20 characters.</p>
+      </div>
+      <input
+        type="text"
+        value={newUsernameInput}
+        onChange={(e) => { setNewUsernameInput(e.target.value); setUsernameError('') }}
+        placeholder="e.g. bhoosuta"
+        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all mb-3"
+      />
+      {usernameError && (
+        <div className="text-xs text-red-500 font-medium mb-3">{usernameError}</div>
+      )}
+      <button
+        onClick={async () => {
+          const cleaned = newUsernameInput.toLowerCase().trim()
+          if (cleaned.length < 3) { setUsernameError('Too short! Minimum 3 characters.'); return }
+          if (cleaned.length > 20) { setUsernameError('Too long! Maximum 20 characters.'); return }
+          if (!/^[a-z0-9_]+$/.test(cleaned)) { setUsernameError('Only letters, numbers and underscores allowed!'); return }
+          const { error } = await supabase.from('profiles').upsert({
+            id: user.id,
+            username: cleaned,
+            email: user.email,
+          })
+          if (error) {
+            setUsernameError('This username is already taken! Try another one 🥒')
+          } else {
+            setUsername(cleaned)
+            setShowUsernameModal(false)
+            setNewUsernameInput('')
+          }
+        }}
+        className="w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:shadow-lg transition-all mb-2"
+      >
+        Save Username 🥒
+      </button>
+      <button
+  onClick={() => { setShowUsernameModal(false); setNewUsernameInput(''); setUsernameError('') }}
+  className="w-full py-2.5 rounded-xl border border-gray-200 text-gray-500 text-sm font-semibold hover:bg-gray-50 transition-all"
+>
+  Cancel
+</button>
+    </div>
+  </div>
+)}
     <main className="min-h-screen bg-green-50 font-sans">
 
       {/* ── NAVBAR ── */}
