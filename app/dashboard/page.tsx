@@ -73,7 +73,7 @@ export default function Dashboard() {
               type="text"
               value={newUsernameInput}
               onChange={(e) => { setNewUsernameInput(e.target.value); setUsernameError('') }}
-              placeholder="e.g. bhoosuta"
+              placeholder="e.g. Disappearing Penguine "
               className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all mb-3"
             />
             {usernameError && (
