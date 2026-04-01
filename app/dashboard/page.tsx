@@ -8,7 +8,7 @@ const [user, setUser] = useState<any>(null)
 const [username, setUsername] = useState('')
 const [loading, setLoading] = useState(true)
   useEffect(() => {
-   async function getUser() {
+  async function getUser() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     window.location.href = '/login'
@@ -19,8 +19,17 @@ const [loading, setLoading] = useState(true)
       .select('username')
       .eq('id', user.id)
       .single()
-    if (profile?.username) setUsername(profile.username)
-    else setUsername(user.email?.split('@')[0] || 'Traveler')
+    if (profile?.username) {
+      setUsername(profile.username)
+    } else {
+      const newUsername = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Traveler'
+      await supabase.from('profiles').upsert({
+        id: user.id,
+        username: newUsername,
+        email: user.email,
+      })
+      setUsername(newUsername)
+    }
     setLoading(false)
   }
 }
