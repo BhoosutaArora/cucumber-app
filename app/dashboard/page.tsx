@@ -93,9 +93,33 @@ const [loading, setLoading] = useState(true)
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-0">
               <div>
                 <div className="text-green-200 text-xs md:text-sm font-semibold mb-1">Welcome back 👋</div>
-                <div className="text-white text-2xl md:text-3xl font-extrabold tracking-tight mb-1">
-                  Hey {userName}! 🥒
-                </div>
+                <div className="flex items-center gap-2">
+  <div className="text-white text-2xl md:text-3xl font-extrabold tracking-tight mb-1">
+    Hey {userName}! 🥒
+  </div>
+  <button
+    onClick={() => {
+      const newUsername = prompt('Choose your username (letters, numbers, underscores only. 3-20 characters):')
+      if (!newUsername) return
+      const cleaned = newUsername.toLowerCase().trim()
+      if (cleaned.length < 3) { alert('Username too short! Minimum 3 characters.'); return }
+      if (cleaned.length > 20) { alert('Username too long! Maximum 20 characters.'); return }
+      if (!/^[a-z0-9_]+$/.test(cleaned)) { alert('Only letters, numbers and underscores allowed!'); return }
+      supabase.from('profiles').upsert({
+        id: user.id,
+        username: cleaned,
+        email: user.email,
+      }).then(() => {
+        setUsername(cleaned)
+        alert('Username updated! 🥒')
+      })
+    }}
+    className="text-white/70 hover:text-white text-lg transition-all"
+    title="Edit username"
+  >
+    ✏️
+  </button>
+</div>
                 <div className="text-green-200 text-xs md:text-sm">Ready for your next adventure?</div>
               </div>
               <div className="flex items-center gap-3 md:gap-6">
