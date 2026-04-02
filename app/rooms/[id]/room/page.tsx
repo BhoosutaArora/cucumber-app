@@ -37,12 +37,13 @@ export default function RoomPage() {
         .single()
       setRoom(room)
 
-      const { data: members } = await supabase
+      const { data: members, error } = await supabase
         .from('room_members')
-        .select('*, profiles(username, email)')
+        .select('*')
         .eq('room_id', id)
-      setMembers(members || [])
 
+      console.log('Members:', members, 'Error:', error, 'ID:', id)
+      setMembers(members || [])
       setLoading(false)
     }
     if (id) load()
@@ -61,7 +62,6 @@ export default function RoomPage() {
 
   return (
     <main className="min-h-screen bg-green-50 font-sans">
-
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 md:px-12 h-14 bg-white border-b border-green-100 shadow-sm">
         <a href="/" className="text-xl font-extrabold text-green-700">
           cucumber<span className="text-green-400">.</span>
@@ -92,12 +92,10 @@ export default function RoomPage() {
               {members.map((member: any) => (
                 <div key={member.id} className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold">
-                    {(member.profiles?.username || 'T')[0].toUpperCase()}
+                    T
                   </div>
                   <div>
-                    <div className="font-semibold text-gray-900 text-sm">
-                      {member.profiles?.username || 'Traveler'}
-                    </div>
+                    <div className="font-semibold text-gray-900 text-sm">Traveler</div>
                     <div className="text-xs text-gray-400">{member.status}</div>
                   </div>
                   {member.user_id === user?.id && (
@@ -111,10 +109,10 @@ export default function RoomPage() {
 
         <div className="grid grid-cols-2 gap-3 mb-4">
           <a href="/chat" className="block py-4 rounded-2xl bg-white border border-green-200 text-green-700 font-bold text-sm text-center hover:bg-green-50 transition-all">
-            💬 Group Chat
+            Group Chat
           </a>
           <a href="/video-call" className="block py-4 rounded-2xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm text-center hover:shadow-lg transition-all">
-            📹 Video Call
+            Video Call
           </a>
         </div>
 

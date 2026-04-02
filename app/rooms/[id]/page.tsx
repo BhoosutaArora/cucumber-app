@@ -13,11 +13,11 @@ export default function RoomDetails() {
   useEffect(() => {
     if (!id) return
     async function fetchRoom() {
-      const { data: members } = await supabase
-  .from('room_members')
-  .select('*')
-  .eq('room_id', id)
-    .single()
+      const { data, error } = await supabase
+        .from('Rooms')
+        .select('*')
+        .eq('id', id)
+        .single()
       if (error) console.error(error)
       else setRoom(data)
       setLoading(false)
@@ -111,13 +111,6 @@ export default function RoomDetails() {
             {pct >= 80 ? 'Almost full!' : 'Seats available'}
           </div>
         </div>
-
-        {room.description && (
-          <div className="bg-white rounded-2xl p-5 mb-6 border border-green-100">
-            <h2 className="font-bold text-gray-900 mb-2">About this trip</h2>
-            <p className="text-sm text-gray-500 leading-relaxed">{room.description}</p>
-          </div>
-        )}
 
         <div className="bg-white rounded-2xl p-5 mb-6 border border-green-100">
           <h2 className="font-bold text-gray-900 mb-3">Itinerary Preview</h2>
