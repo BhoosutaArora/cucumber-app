@@ -30,7 +30,7 @@ export default function JoinRoom() {
   }, [id])
 
   async function handleJoin() {
-    setJoining(true)
+    window.location.href = '/rooms/' + id
     const { error } = await supabase.from('room_members').insert({
       room_id: id,
       user_id: user.id,
