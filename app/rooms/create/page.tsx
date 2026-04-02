@@ -56,35 +56,46 @@ export default function CreateRoom() {
   }
 
   return (
-    <main className="min-h-screen bg-green-50 font-sans flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
+    <main style={{ minHeight: '100vh', background: '#F0FAF0', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', fontFamily: 'sans-serif' }}>
+      <div style={{ width: '100%', maxWidth: '440px' }}>
 
-        <div className="text-center mb-8">
-          <a href="/" className="text-2xl font-extrabold text-green-700 block mb-6">
-            cucumber<span className="text-green-400">.</span>
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <a href="/" style={{ fontSize: '24px', fontWeight: '900', color: '#2E7D32', display: 'block', marginBottom: '24px', textDecoration: 'none' }}>
+            cucumber<span style={{ color: '#4CAF50' }}>.</span>
           </a>
-          <div className="text-4xl mb-3">🏠</div>
-          <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Create a Room</h1>
-          <p className="text-gray-400 text-sm">Your room will be reviewed by Cucumber before going live!</p>
+          <div style={{ fontSize: '40px', marginBottom: '12px' }}>🏠</div>
+          <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#111827', marginBottom: '8px' }}>Create a Room</h1>
+          <p style={{ color: '#9CA3AF', fontSize: '14px' }}>Your room will be reviewed by Cucumber before going live!</p>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-sm border border-green-100 p-6 flex flex-col gap-5">
+        <div style={{ background: '#ffffff', borderRadius: '24px', padding: '24px', border: '1px solid #E8F5E9', display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
+          {/* Room Name */}
           <div>
-            <label className="block text-xs font-bold text-gray-500 mb-1.5">Room Name *</label>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#6B7280', marginBottom: '6px' }}>Room Name *</label>
             <input
               name="name"
               value={form.name}
               onChange={handleChange}
               placeholder="e.g. Girls Trip to Shimla 🏔️"
-              style={{ color: '#111827' }}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
+              style={{
+                width: '100%',
+                border: '1px solid #E5E7EB',
+                borderRadius: '12px',
+                padding: '12px 16px',
+                fontSize: '14px',
+                color: '#111827',
+                background: '#ffffff',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
             />
           </div>
 
+          {/* Gender Preference */}
           <div>
-            <label className="block text-xs font-bold text-gray-500 mb-1.5">Who can join?</label>
-            <div className="grid grid-cols-3 gap-2">
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#6B7280', marginBottom: '6px' }}>Who can join?</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
               {[
                 { value: 'any', label: '🌍 Everyone' },
                 { value: 'women', label: '👩 Women Only' },
@@ -94,11 +105,16 @@ export default function CreateRoom() {
                   key={option.value}
                   type="button"
                   onClick={() => setForm(prev => ({ ...prev, gender_preference: option.value }))}
-                  className={`py-2.5 rounded-xl text-xs font-bold border transition-all ${
-                    form.gender_preference === option.value
-                      ? 'bg-green-500 text-white border-green-500'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-green-300'
-                  }`}
+                  style={{
+                    padding: '10px 4px',
+                    borderRadius: '12px',
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    border: form.gender_preference === option.value ? '1px solid #4CAF50' : '1px solid #E5E7EB',
+                    background: form.gender_preference === option.value ? '#4CAF50' : '#ffffff',
+                    color: form.gender_preference === option.value ? '#ffffff' : '#4B5563',
+                    cursor: 'pointer',
+                  }}
                 >
                   {option.label}
                 </button>
@@ -106,22 +122,23 @@ export default function CreateRoom() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between bg-green-50 rounded-xl px-4 py-3 border border-green-100">
+          {/* Private Room */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#F0FAF0', borderRadius: '12px', padding: '12px 16px', border: '1px solid #E8F5E9' }}>
             <div>
-              <div className="font-semibold text-gray-900 text-sm">Private Room 🔒</div>
-              <div className="text-xs text-gray-400">Like Among Us — only with the code!</div>
+              <div style={{ fontWeight: '600', color: '#111827', fontSize: '14px' }}>Private Room 🔒</div>
+              <div style={{ fontSize: '12px', color: '#9CA3AF' }}>Like Among Us — only with the code!</div>
             </div>
             <input
               type="checkbox"
               name="is_private"
               checked={form.is_private}
               onChange={handleChange}
-              className="w-5 h-5 accent-green-500"
+              style={{ width: '20px', height: '20px', accentColor: '#4CAF50' }}
             />
           </div>
 
           {form.is_private && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 text-xs text-yellow-700 font-medium">
+            <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '12px', padding: '12px 16px', fontSize: '12px', color: '#92400E', fontWeight: '500' }}>
               🔑 A unique room code will be generated automatically when your room is approved!
             </div>
           )}
@@ -129,12 +146,23 @@ export default function CreateRoom() {
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="w-full py-4 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-base hover:shadow-lg transition-all disabled:opacity-50"
+            style={{
+              width: '100%',
+              padding: '16px',
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, #7ED957, #4CAF50)',
+              color: '#ffffff',
+              fontWeight: '700',
+              fontSize: '16px',
+              border: 'none',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.7 : 1,
+            }}
           >
             {loading ? 'Creating...' : 'Create Room 🥒'}
           </button>
 
-          <a href="/rooms" className="block text-center text-xs text-gray-400 hover:text-gray-600">
+          <a href="/rooms" style={{ display: 'block', textAlign: 'center', fontSize: '12px', color: '#9CA3AF', textDecoration: 'none' }}>
             ← Back to Rooms
           </a>
 
@@ -143,4 +171,3 @@ export default function CreateRoom() {
     </main>
   )
 }
-
