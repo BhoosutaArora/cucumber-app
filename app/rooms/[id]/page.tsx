@@ -157,7 +157,7 @@ export default function RoomDetails({ params }: { params: { id: string } }) {
           >
             Join This Room 
           </a>
-          <p className="text-center text-xs text-gray-400 mt-2">Rs.199 token · Refundable within 24 hours</p>
+          <p className="text-center text-xs text-gray-400 mt-2">Rs.199 token - Refundable within 24 hours</p>
         </div>
 
       </div>
