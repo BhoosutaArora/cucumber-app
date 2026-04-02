@@ -218,9 +218,9 @@ export default function Rooms() {
                       >
                         Join Room 💳
                       </button>
-                      <button className="px-3 md:px-4 py-2.5 rounded-xl border border-green-200 text-green-700 text-sm font-semibold hover:bg-green-50 transition-all">
-                        Details
-                      </button>
+                      <a href={`/rooms/${room.id}`} className="px-3 md:px-4 py-2.5 rounded-xl border border-green-200 text-green-700 text-sm font-semibold hover:bg-green-50 transition-all">
+  Details
+</a>
                     </div>
                   </div>
                 </div>
