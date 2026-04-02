@@ -1,5 +1,20 @@
 'use client'
+const [username, setUsername] = useState('')
 
+useEffect(() => {
+  async function checkUser() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', user.id)
+        .single()
+      setUsername(profile?.username || user.email?.split('@')[0] || 'Traveler')
+    }
+  }
+  checkUser()
+}, [])
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
@@ -101,12 +116,18 @@ export default function Rooms() {
           <a href="/dashboard" className="text-sm font-medium text-gray-500 hover:text-green-700 transition-colors">Dashboard</a>
         </div>
         <div className="flex items-center gap-2">
-          <a href="/login" className="text-xs md:text-sm font-semibold text-green-700 border border-green-200 px-3 md:px-5 py-1.5 md:py-2 rounded-xl hover:bg-green-50 transition-all">
-            Sign in
-          </a>
-          <a href="/login" className="text-xs md:text-sm font-bold text-white bg-gradient-to-r from-green-400 to-green-500 px-3 md:px-5 py-1.5 md:py-2 rounded-xl hover:shadow-lg transition-all">
-            Join →
-          </a>
+          {username ? (
+  <a href="/dashboard" className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-1.5">
+    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-xs font-bold">
+      {username[0].toUpperCase()}
+    </div>
+    <span className="text-xs md:text-sm font-semibold text-green-700">{username}</span>
+  </a>
+) : (
+  <a href="/login" className="text-xs md:text-sm font-semibold text-green-700 border border-green-200 px-3 md:px-5 py-1.5 md:py-2 rounded-xl hover:bg-green-50 transition-all">
+    Sign in
+  </a>
+)}
         </div>
       </nav>
 
