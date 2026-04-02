@@ -6,25 +6,6 @@ import { supabase } from '../../lib/supabase'
 export default function RoomDetails({ params }: { params: { id: string } }) {
   const [room, setRoom] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const roomId = params.id
-
-  useEffect(() => {
-    async function fetchRoom() {
-      console.log('Fetching room with id:', roomId)
-      const { data, error } = await supabase
-        .from('Rooms')
-        .select('*')
-        .eq('id', roomId)
-        .single()
-      console.log('Data:', data, 'Error:', error)
-      if (error) console.error(error)
-      else setRoom(data)
-      setLoading(false)
-    }
-    fetchRoom()
-  }, [roomId])
-  const [room, setRoom] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function fetchRoom() {
@@ -86,11 +67,11 @@ export default function RoomDetails({ params }: { params: { id: string } }) {
               <span className="text-xs font-bold bg-white/20 px-3 py-1 rounded-full">{room.vibe}</span>
               {room.gender_preference !== 'any' && (
                 <span className="text-xs font-bold bg-white/20 px-3 py-1 rounded-full">
-                  {room.gender_preference === 'women' ? '👩 Women Only' : '👨 Men Only'}
+                  {room.gender_preference === 'women' ? 'Women Only' : 'Men Only'}
                 </span>
               )}
               {room.is_private && (
-                <span className="text-xs font-bold bg-white/20 px-3 py-1 rounded-full">🔒 Private</span>
+                <span className="text-xs font-bold bg-white/20 px-3 py-1 rounded-full">Private</span>
               )}
             </div>
             <h1 className="text-2xl md:text-3xl font-extrabold mb-2">{room.name}</h1>
@@ -126,7 +107,7 @@ export default function RoomDetails({ params }: { params: { id: string } }) {
             />
           </div>
           <div className={`text-xs font-bold mt-2 ${pct >= 80 ? 'text-orange-500' : 'text-green-600'}`}>
-            {pct >= 80 ? '🔥 Almost full!' : '🌱 Seats available'}
+            {pct >= 80 ? 'Almost full!' : 'Seats available'}
           </div>
         </div>
 
@@ -138,7 +119,7 @@ export default function RoomDetails({ params }: { params: { id: string } }) {
         )}
 
         <div className="bg-white rounded-2xl p-5 mb-6 border border-green-100">
-          <h2 className="font-bold text-gray-900 mb-3">Itinerary Preview 🗺️</h2>
+          <h2 className="font-bold text-gray-900 mb-3">Itinerary Preview</h2>
           <div className="space-y-2">
             <div className="flex items-center gap-3 text-sm text-gray-600">
               <span className="w-16 text-xs font-bold text-green-600">Day 1</span>
@@ -150,34 +131,36 @@ export default function RoomDetails({ params }: { params: { id: string } }) {
             </div>
             <div className="flex items-center gap-3 text-sm text-gray-600">
               <span className="w-16 text-xs font-bold text-green-600">Day 3+</span>
-              <span className="text-gray-400 italic">🔒 Full itinerary unlocks after joining</span>
+              <span className="text-gray-400 italic">Full itinerary unlocks after joining</span>
             </div>
           </div>
           <div className="mt-4 bg-green-50 rounded-xl p-3 border border-green-100">
-            <p className="text-xs text-green-700 font-medium">🔑 Pay Rs.199 to unlock full itinerary, hotel details, and meet your travel buddies!</p>
+            <p className="text-xs text-green-700 font-medium">Pay Rs.199 to unlock full itinerary, hotel details, and meet your travel buddies!</p>
           </div>
         </div>
 
         <div className="bg-white rounded-2xl p-5 mb-6 border border-green-100">
           <h2 className="font-bold text-gray-900 mb-3">What is Included</h2>
           <div className="grid grid-cols-2 gap-2">
-            {['🏨 Hotel stay', '🚌 Transport', '🍽️ Meals', '🎯 Activities', '🥒 Trip Captain', '📞 24/7 Support'].map((item) => (
+            {['Hotel stay', 'Transport', 'Meals', 'Activities', 'Trip Captain', '24/7 Support'].map((item) => (
               <div key={item} className="flex items-center gap-2 text-sm text-gray-600">
+                <span className="text-green-500">✓</span>
                 <span>{item}</span>
               </div>
             ))}
           </div>
         </div>
 
-       <div className="sticky bottom-4">
-  <button
-    onClick={() => window.location.href = '/rooms/' + params.id + '/join'}
-    className="block w-full py-4 rounded-2xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-base text-center hover:shadow-lg transition-all shadow-md"
-  >
-    Join This Room
-  </button>
-  <p className="text-center text-xs text-gray-400 mt-2">Rs.199 token - Refundable within 24 hours</p>
-</div>
+        <div className="sticky bottom-4">
+          <button
+            onClick={() => { window.location.href = '/rooms/' + params.id + '/join' }}
+            className="w-full py-4 rounded-2xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-base text-center hover:shadow-lg transition-all shadow-md"
+          >
+            Join This Room
+          </button>
+          <p className="text-center text-xs text-gray-400 mt-2">Rs.199 token - Refundable within 24 hours</p>
+        </div>
+
       </div>
     </main>
   )
