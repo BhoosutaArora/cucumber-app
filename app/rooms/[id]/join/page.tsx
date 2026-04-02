@@ -33,7 +33,7 @@ export default function JoinRoom() {
         .single()
 
       if (existing) {
-        window.location.href = '/rooms/' + id
+        window.location.href = '/rooms/' + id + '/room'
         return
       }
 
@@ -44,18 +44,22 @@ export default function JoinRoom() {
 
   async function handleJoin() {
     setJoining(true)
-    const { error } = await supabase.from('room_members').insert({
+    console.log('Joining room:', id, 'User:', user?.id)
+
+    const { data, error } = await supabase.from('room_members').insert({
       room_id: id,
       user_id: user.id,
       status: 'pending',
       joined_at: new Date().toISOString(),
     })
+
+    console.log('Result:', data, 'Error:', error)
+
     if (error) {
-      alert('Something went wrong! Try again.')
-      console.error(error)
+      alert('Error: ' + error.message)
       setJoining(false)
     } else {
-      window.location.href = '/rooms/' + id
+      window.location.href = '/rooms/' + id + '/room'
     }
   }
 
@@ -108,15 +112,14 @@ export default function JoinRoom() {
           {joining ? 'Joining...' : 'Yes I want to Join!'}
         </button>
 
-        
-         <button
-  onClick={() => { window.location.href = '/rooms/' + id + '/room'}}
-  className="block w-full text-center text-sm text-gray-400 hover:text-gray-600"
->
-  Go back
-</button>
+        <button
+          onClick={() => { window.location.href = '/rooms/' + id }}
+          className="w-full text-center text-sm text-gray-400 hover:text-gray-600 py-2"
+        >
+          Go back
+        </button>
 
       </div>
     </main>
   )
-}   
+}
