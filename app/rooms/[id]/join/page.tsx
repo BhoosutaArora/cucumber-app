@@ -110,7 +110,7 @@ export default function JoinRoom() {
 
         
          <button
-  onClick={() => { window.location.href = '/rooms/' + id }}
+  onClick={() => { window.location.href = '/rooms/' + id + '/room'}}
   className="block w-full text-center text-sm text-gray-400 hover:text-gray-600"
 >
   Go back
