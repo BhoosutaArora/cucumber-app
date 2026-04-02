@@ -57,10 +57,8 @@ export default function CreateRoom() {
 
   return (
     <main className="min-h-screen bg-green-50 font-sans flex items-center justify-center px-4">
-
       <div className="w-full max-w-md">
 
-        {/* HEADER */}
         <div className="text-center mb-8">
           <a href="/" className="text-2xl font-extrabold text-green-700 block mb-6">
             cucumber<span className="text-green-400">.</span>
@@ -72,7 +70,6 @@ export default function CreateRoom() {
 
         <div className="bg-white rounded-3xl shadow-sm border border-green-100 p-6 flex flex-col gap-5">
 
-          {/* Room Name */}
           <div>
             <label className="block text-xs font-bold text-gray-500 mb-1.5">Room Name *</label>
             <input
@@ -80,10 +77,11 @@ export default function CreateRoom() {
               value={form.name}
               onChange={handleChange}
               placeholder="e.g. Girls Trip to Shimla 🏔️"
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
+              style={{ color: '#111827' }}
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
+            />
           </div>
 
-          {/* Gender Preference */}
           <div>
             <label className="block text-xs font-bold text-gray-500 mb-1.5">Who can join?</label>
             <div className="grid grid-cols-3 gap-2">
@@ -108,7 +106,6 @@ export default function CreateRoom() {
             </div>
           </div>
 
-          {/* Private Room Toggle */}
           <div className="flex items-center justify-between bg-green-50 rounded-xl px-4 py-3 border border-green-100">
             <div>
               <div className="font-semibold text-gray-900 text-sm">Private Room 🔒</div>
@@ -146,3 +143,4 @@ export default function CreateRoom() {
     </main>
   )
 }
+
