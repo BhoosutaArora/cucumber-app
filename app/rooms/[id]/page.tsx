@@ -31,7 +31,7 @@ export default function RoomDetails({ params }: { params: { id: string } }) {
       const { data, error } = await supabase
         .from('Rooms')
         .select('*')
-        .eq('id', parseInt(params.id))
+        .eq('id', Number(params.id))
         .single()
       if (error) console.error(error)
       else setRoom(data)
