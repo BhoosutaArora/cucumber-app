@@ -13,11 +13,11 @@ export default function RoomDetails() {
   useEffect(() => {
     if (!id) return
     async function fetchRoom() {
-      const { data, error } = await supabase
-        .from('Rooms')
-        .select('*')
-        .eq('id', id)
-        .single()
+      const { data: members } = await supabase
+  .from('room_members')
+  .select('*')
+  .eq('room_id', id)
+    .single()
       if (error) console.error(error)
       else setRoom(data)
       setLoading(false)
