@@ -155,7 +155,7 @@ export default function RoomDetails({ params }: { params: { id: string } }) {
             href={'/rooms/' + params.id + '/join'}
             className="block w-full py-4 rounded-2xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-base text-center hover:shadow-lg transition-all shadow-md"
           >
-            Join This Room 🥒
+            Join This Room 
           </a>
           <p className="text-center text-xs text-gray-400 mt-2">Rs.199 token · Refundable within 24 hours</p>
         </div>
