@@ -6,6 +6,25 @@ import { supabase } from '../../lib/supabase'
 export default function RoomDetails({ params }: { params: { id: string } }) {
   const [room, setRoom] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const roomId = params.id
+
+  useEffect(() => {
+    async function fetchRoom() {
+      console.log('Fetching room with id:', roomId)
+      const { data, error } = await supabase
+        .from('Rooms')
+        .select('*')
+        .eq('id', roomId)
+        .single()
+      console.log('Data:', data, 'Error:', error)
+      if (error) console.error(error)
+      else setRoom(data)
+      setLoading(false)
+    }
+    fetchRoom()
+  }, [roomId])
+  const [room, setRoom] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function fetchRoom() {
