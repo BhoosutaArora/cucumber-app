@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 
-export default function RoomDetails({ params }: { params: { id: string } }) {
+export default function RoomDetails({ params }: any) {
+  const id = params?.id
   const [room, setRoom] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
@@ -12,7 +13,7 @@ export default function RoomDetails({ params }: { params: { id: string } }) {
       const { data, error } = await supabase
         .from('Rooms')
         .select('*')
-        .eq('id',(params.id))
+       .eq('id', id)
         .single()
       if (error) console.error(error)
       else setRoom(data)
@@ -153,7 +154,7 @@ export default function RoomDetails({ params }: { params: { id: string } }) {
 
         <div className="sticky bottom-4">
           <button
-            onClick={() => { window.location.href = '/rooms/' + params.id + '/join' }}
+            onClick={() => { window.location.href = '/rooms/' + id + '/join' }}
             className="w-full py-4 rounded-2xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-base text-center hover:shadow-lg transition-all shadow-md"
           >
             Join This Room
