@@ -37,12 +37,11 @@ export default function RoomPage() {
         .single()
       setRoom(room)
 
-      const { data: members, error } = await supabase
+      const { data: members } = await supabase
         .from('room_members')
-        .select('*')
+        .select('*, profiles(username)')
         .eq('room_id', id)
 
-      console.log('Members:', members, 'Error:', error, 'ID:', id)
       setMembers(members || [])
       setLoading(false)
     }
@@ -88,20 +87,26 @@ export default function RoomPage() {
           {members.length === 0 ? (
             <p className="text-gray-400 text-sm">No members yet!</p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {members.map((member: any) => (
-                <div key={member.id} className="flex items-center gap-3">
+                
+                  key={member.id}
+                  href={'/profile/' + (member.profiles?.username || '')}
+                  className="flex items-center gap-3 hover:bg-green-50 rounded-xl p-2 transition-all cursor-pointer"
+                >
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold">
-                    T
+                    {(member.profiles?.username || 'T')[0].toUpperCase()}
                   </div>
-                  <div>
-                    <div className="font-semibold text-gray-900 text-sm">Traveler</div>
+                  <div className="flex-1">
+                    <div className="font-semibold text-gray-900 text-sm">
+                      {member.profiles?.username || 'Traveler'}
+                    </div>
                     <div className="text-xs text-gray-400">{member.status}</div>
                   </div>
                   {member.user_id === user?.id && (
-                    <span className="ml-auto text-xs bg-green-100 text-green-700 font-bold px-2 py-1 rounded-full">You</span>
+                    <span className="text-xs bg-green-100 text-green-700 font-bold px-2 py-1 rounded-full">You</span>
                   )}
-                </div>
+                </a>
               ))}
             </div>
           )}
@@ -145,3 +150,4 @@ export default function RoomPage() {
     </main>
   )
 }
+
