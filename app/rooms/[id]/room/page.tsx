@@ -30,19 +30,29 @@ export default function RoomPage() {
         return
       }
 
-      const { data: room } = await supabase
+      const { data: roomData } = await supabase
         .from('Rooms')
         .select('*')
         .eq('id', id)
         .single()
-      setRoom(room)
+      setRoom(roomData)
 
-      const { data: members } = await supabase
+      const { data: membersRaw } = await supabase
         .from('room_members')
-        .select('*, profiles(username)')
+        .select('*')
         .eq('room_id', id)
 
-      setMembers(members || [])
+      const membersWithProfiles = await Promise.all(
+        (membersRaw || []).map(async (member: any) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('username')
+            .eq('id', member.user_id)
+            .single()
+          return { ...member, profiles: profile }
+        })
+      )
+      setMembers(membersWithProfiles)
       setLoading(false)
     }
     if (id) load()
