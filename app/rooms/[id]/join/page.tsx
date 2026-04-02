@@ -11,13 +11,13 @@ export default function JoinRoom() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [joining, setJoining] = useState(false)
-  const [joined, setJoined] = useState(false)
 
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/login'; return }
       setUser(user)
+
       const { data: room } = await supabase
         .from('Rooms')
         .select('*')
@@ -25,25 +25,25 @@ export default function JoinRoom() {
         .single()
       setRoom(room)
 
-const { data: existing } = await supabase
-  .from('room_members')
-  .select('id')
-  .eq('room_id', id)
-  .eq('user_id', user.id)
-  .single()
+      const { data: existing } = await supabase
+        .from('room_members')
+        .select('id')
+        .eq('room_id', id)
+        .eq('user_id', user.id)
+        .single()
 
-if (existing) {
-  window.location.href = '/rooms/' + id
-  return
-}
+      if (existing) {
+        window.location.href = '/rooms/' + id
+        return
+      }
 
-setLoading(false)
-  }
+      setLoading(false)
+    }
     if (id) load()
   }, [id])
 
   async function handleJoin() {
-    window.location.href = '/rooms/' + id
+    setJoining(true)
     const { error } = await supabase.from('room_members').insert({
       room_id: id,
       user_id: user.id,
@@ -55,7 +55,7 @@ setLoading(false)
       console.error(error)
       setJoining(false)
     } else {
-      setJoined(true)
+      window.location.href = '/rooms/' + id
     }
   }
 
@@ -65,21 +65,6 @@ setLoading(false)
         <div className="text-center">
           <div className="text-5xl mb-4">🥒</div>
           <div className="text-green-700 font-bold">Loading...</div>
-        </div>
-      </div>
-    )
-  }
-
-  if (joined) {
-    return (
-      <div className="min-h-screen bg-green-50 flex items-center justify-center px-4">
-        <div className="bg-white rounded-3xl p-8 max-w-md w-full text-center border border-green-100">
-          <div className="text-5xl mb-4">🎉</div>
-          <h2 className="text-2xl font-extrabold text-gray-900 mb-2">You are in!</h2>
-          <p className="text-gray-500 text-sm mb-6">You have joined the room! Start chatting with your travel buddies while waiting for the room to fill up.</p>
-          <a href={'/rooms/' + id} className="block w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold hover:shadow-lg transition-all">
-            Go to Room
-          </a>
         </div>
       </div>
     )
@@ -110,7 +95,9 @@ setLoading(false)
         <div className="bg-white rounded-2xl border border-green-100 p-5 mb-4">
           <div className="font-bold text-gray-900 text-lg mb-1">{room?.name}</div>
           <div className="text-sm text-green-600">📍 {room?.destination}</div>
-          {room?.dates && <div className="text-sm text-gray-400 mt-1">📅 {room?.dates}</div>}
+          {room?.dates && (
+            <div className="text-sm text-gray-400 mt-1">📅 {room?.dates}</div>
+          )}
         </div>
 
         <button
@@ -121,11 +108,14 @@ setLoading(false)
           {joining ? 'Joining...' : 'Yes I want to Join!'}
         </button>
 
-        <a href={'/rooms/' + id} className="block text-center text-sm text-gray-400 hover:text-gray-600">
+        
+          href={'/rooms/' + id}
+          className="block text-center text-sm text-gray-400 hover:text-gray-600"
+        >
           Go back
         </a>
 
       </div>
     </main>
   )
-}
+}   
