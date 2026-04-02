@@ -146,9 +146,9 @@ export default function Rooms() {
             </button>
           ))}
           <div className="ml-auto flex-shrink-0">
-            <button className="px-3 md:px-5 py-1.5 md:py-2 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white text-xs md:text-sm font-bold whitespace-nowrap">
-              + Create Room
-            </button>
+          <a href="/rooms/create" className="px-3 md:px-5 py-1.5 md:py-2 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white text-xs md:text-sm font-bold whitespace-nowrap">
+  + Create Room
+</a>
           </div>
         </div>
       </section>
