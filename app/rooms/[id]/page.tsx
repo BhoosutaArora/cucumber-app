@@ -1,26 +1,29 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
 
-export default function RoomDetails({ params }: any) {
-  const id = params?.id
+export default function RoomDetails() {
+  const params = useParams()
+  const id = params?.id as string
   const [room, setRoom] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!id) return
     async function fetchRoom() {
       const { data, error } = await supabase
         .from('Rooms')
         .select('*')
-       .eq('id', id)
+        .eq('id', id)
         .single()
       if (error) console.error(error)
       else setRoom(data)
       setLoading(false)
     }
     fetchRoom()
-  }, [])
+  }, [id])
 
   if (loading) {
     return (
@@ -49,7 +52,6 @@ export default function RoomDetails({ params }: any) {
 
   return (
     <main className="min-h-screen bg-green-50 font-sans">
-
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 md:px-12 h-14 bg-white border-b border-green-100 shadow-sm">
         <a href="/" className="text-xl font-extrabold text-green-700">
           cucumber<span className="text-green-400">.</span>
@@ -66,7 +68,7 @@ export default function RoomDetails({ params }: any) {
           <div className="relative z-10">
             <div className="flex items-center gap-2 mb-3 flex-wrap">
               <span className="text-xs font-bold bg-white/20 px-3 py-1 rounded-full">{room.vibe}</span>
-              {room.gender_preference !== 'any' && (
+              {room.gender_preference && room.gender_preference !== 'any' && (
                 <span className="text-xs font-bold bg-white/20 px-3 py-1 rounded-full">
                   {room.gender_preference === 'women' ? 'Women Only' : 'Men Only'}
                 </span>
@@ -77,9 +79,7 @@ export default function RoomDetails({ params }: any) {
             </div>
             <h1 className="text-2xl md:text-3xl font-extrabold mb-2">{room.name}</h1>
             <div className="text-green-200 text-sm">📍 {room.destination}</div>
-            {room.dates && (
-              <div className="text-green-200 text-sm mt-1">📅 {room.dates}</div>
-            )}
+            {room.dates && <div className="text-green-200 text-sm mt-1">📅 {room.dates}</div>}
           </div>
         </div>
 
