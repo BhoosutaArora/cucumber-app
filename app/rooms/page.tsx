@@ -1,26 +1,39 @@
 'use client'
-const [username, setUsername] = useState('')
 
-useEffect(() => {
-  async function checkUser() {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('id', user.id)
-        .single()
-      setUsername(profile?.username || user.email?.split('@')[0] || 'Traveler')
-    }
-  }
-  checkUser()
-}, [])
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
 export default function Rooms() {
   const [rooms, setRooms] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [username, setUsername] = useState('')
+
+  useEffect(() => {
+    async function fetchRooms() {
+      const { data, error } = await supabase
+        .from('Rooms')
+        .select('*')
+        .order('created_at', { ascending: false })
+      if (error) console.error('Error fetching rooms:', error)
+      else setRooms(data || [])
+      setLoading(false)
+    }
+
+    async function checkUser() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('id', user.id)
+          .single()
+        setUsername(profile?.username || user.email?.split('@')[0] || 'Traveler')
+      }
+    }
+
+    fetchRooms()
+    checkUser()
+  }, [])
 
   async function handlePayment(room: any) {
     const res = await fetch('/api/create-order', {
@@ -37,39 +50,34 @@ export default function Rooms() {
       name: 'Cucumber Travel',
       description: room.name,
       order_id: data.orderId,
-     handler: async function () {
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  // Send email
-  await fetch('/api/send-email', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      email: user?.email,
-      name: user?.email?.split('@')[0],
-      roomName: room.name,
-      destination: room.destination,
-      dates: room.dates,
-      price: room.price,
-    }),
-  })
-
-  // Send WhatsApp
-  await fetch('/api/send-whatsapp', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      to: '+916284838263',
-      roomName: room.name,
-      destination: room.destination,
-      dates: room.dates,
-      price: room.price,
-      type: 'booking',
-    }),
-  })
-
-  window.location.href = '/booking-confirmed'
-},
+      handler: async function () {
+        const { data: { user } } = await supabase.auth.getUser()
+        await fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: user?.email,
+            name: user?.email?.split('@')[0],
+            roomName: room.name,
+            destination: room.destination,
+            dates: room.dates,
+            price: room.price,
+          }),
+        })
+        await fetch('/api/send-whatsapp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: '+916284838263',
+            roomName: room.name,
+            destination: room.destination,
+            dates: room.dates,
+            price: room.price,
+            type: 'booking',
+          }),
+        })
+        window.location.href = '/booking-confirmed'
+      },
       prefill: { name: '', email: '' },
       theme: { color: '#4CAF50' },
     }
@@ -77,19 +85,6 @@ export default function Rooms() {
     const rzp = new (window as any).Razorpay(options)
     rzp.open()
   }
-
-  useEffect(() => {
-    async function fetchRooms() {
-      const { data, error } = await supabase
-        .from('Rooms')
-        .select('*')
-        .order('created_at', { ascending: false })
-      if (error) console.error('Error fetching rooms:', error)
-      else setRooms(data || [])
-      setLoading(false)
-    }
-    fetchRooms()
-  }, [])
 
   if (loading) {
     return (
@@ -117,17 +112,17 @@ export default function Rooms() {
         </div>
         <div className="flex items-center gap-2">
           {username ? (
-  <a href="/dashboard" className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-1.5">
-    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-xs font-bold">
-      {username[0].toUpperCase()}
-    </div>
-    <span className="text-xs md:text-sm font-semibold text-green-700">{username}</span>
-  </a>
-) : (
-  <a href="/login" className="text-xs md:text-sm font-semibold text-green-700 border border-green-200 px-3 md:px-5 py-1.5 md:py-2 rounded-xl hover:bg-green-50 transition-all">
-    Sign in
-  </a>
-)}
+            <a href="/dashboard" className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-1.5">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-xs font-bold">
+                {username[0].toUpperCase()}
+              </div>
+              <span className="text-xs md:text-sm font-semibold text-green-700">{username}</span>
+            </a>
+          ) : (
+            <a href="/login" className="text-xs md:text-sm font-semibold text-green-700 border border-green-200 px-3 md:px-5 py-1.5 md:py-2 rounded-xl hover:bg-green-50 transition-all">
+              Sign in
+            </a>
+          )}
         </div>
       </nav>
 
@@ -167,9 +162,9 @@ export default function Rooms() {
             </button>
           ))}
           <div className="ml-auto flex-shrink-0">
-          <a href="/rooms/create" className="px-3 md:px-5 py-1.5 md:py-2 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white text-xs md:text-sm font-bold whitespace-nowrap">
-  + Create Room
-</a>
+            <a href="/rooms/create" className="px-3 md:px-5 py-1.5 md:py-2 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white text-xs md:text-sm font-bold whitespace-nowrap">
+              + Create Room
+            </a>
           </div>
         </div>
       </section>
@@ -185,7 +180,7 @@ export default function Rooms() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             {rooms.map((room: any) => {
-              const pct = Math.round((room.seats_filled / room.seats_total) * 100)
+              const pct = Math.round(((room.seats_filled || 0) / (room.seats_total || 10)) * 100)
               return (
                 <div key={room.id} className="bg-white rounded-2xl overflow-hidden border border-green-100 hover:-translate-y-1 hover:shadow-xl hover:shadow-green-100 transition-all duration-300">
                   <div className={`h-1.5 w-full bg-gradient-to-r ${room.gradient || 'from-green-400 to-green-600'}`} />
@@ -206,7 +201,7 @@ export default function Rooms() {
                     </div>
                     <div className="mb-2">
                       <div className="flex justify-between text-xs mb-1.5">
-                        <span className="font-semibold text-gray-600">{room.seats_filled} / {room.seats_total} seats filled</span>
+                        <span className="font-semibold text-gray-600">{room.seats_filled || 0} / {room.seats_total || 10} seats filled</span>
                         <span className="text-gray-400">{pct}%</span>
                       </div>
                       <div className="h-2 bg-green-100 rounded-full overflow-hidden">
