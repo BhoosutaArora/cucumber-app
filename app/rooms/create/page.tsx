@@ -80,8 +80,7 @@ export default function CreateRoom() {
               value={form.name}
               onChange={handleChange}
               placeholder="e.g. Girls Trip to Shimla 🏔️"
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
-            />
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
           </div>
 
           {/* Gender Preference */}
