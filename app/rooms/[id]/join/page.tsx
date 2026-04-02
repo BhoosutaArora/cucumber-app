@@ -24,8 +24,21 @@ export default function JoinRoom() {
         .eq('id', id)
         .single()
       setRoom(room)
-      setLoading(false)
-    }
+
+const { data: existing } = await supabase
+  .from('room_members')
+  .select('id')
+  .eq('room_id', id)
+  .eq('user_id', user.id)
+  .single()
+
+if (existing) {
+  window.location.href = '/rooms/' + id
+  return
+}
+
+setLoading(false)
+  }
     if (id) load()
   }, [id])
 
