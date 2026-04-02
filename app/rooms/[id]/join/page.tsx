@@ -109,11 +109,12 @@ export default function JoinRoom() {
         </button>
 
         
-          href={'/rooms/' + id}
-          className="block text-center text-sm text-gray-400 hover:text-gray-600"
-        >
-          Go back
-        </a>
+         <button
+  onClick={() => { window.location.href = '/rooms/' + id }}
+  className="block w-full text-center text-sm text-gray-400 hover:text-gray-600"
+>
+  Go back
+</button>
 
       </div>
     </main>
