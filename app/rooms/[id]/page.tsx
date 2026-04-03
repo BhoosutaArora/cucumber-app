@@ -15,7 +15,7 @@ export default function RoomDetails() {
     async function fetchRoom() {
       const { data, error } = await supabase
         .from('Rooms')
-        .select('*')
+        .select('*, itineraries(*)')
         .eq('id', id)
         .single()
       if (error) console.error(error)
@@ -85,9 +85,9 @@ export default function RoomDetails() {
 
         <div className="grid grid-cols-3 gap-3 mb-6">
           {[
-            { label: 'Price', value: room.price ? 'Rs.' + room.price.toLocaleString() : 'TBD' },
+            { label: 'Price', value: room.itineraries ? 'Rs.' + room.itineraries.price?.toLocaleString() : room.price ? 'Rs.' + room.price?.toLocaleString() : 'TBD' },
             { label: 'Seats Left', value: String((room.seats_total || 10) - (room.seats_filled || 0)) },
-            { label: 'Duration', value: room.duration || '4 Days' },
+            { label: 'Duration', value: room.itineraries?.duration || '4 Days' },
           ].map((s) => (
             <div key={s.label} className="bg-white rounded-2xl p-4 text-center border border-green-100">
               <div className="font-extrabold text-green-700 text-lg">{s.value}</div>
@@ -103,43 +103,59 @@ export default function RoomDetails() {
           </div>
           <div className="h-2 bg-green-100 rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full ${pct >= 80 ? 'bg-gradient-to-r from-orange-400 to-red-500' : 'bg-gradient-to-r from-green-400 to-green-500'}`}
+              className={'h-full rounded-full ' + (pct >= 80 ? 'bg-gradient-to-r from-orange-400 to-red-500' : 'bg-gradient-to-r from-green-400 to-green-500')}
               style={{ width: pct + '%' }}
             />
           </div>
-          <div className={`text-xs font-bold mt-2 ${pct >= 80 ? 'text-orange-500' : 'text-green-600'}`}>
+          <div className={'text-xs font-bold mt-2 ' + (pct >= 80 ? 'text-orange-500' : 'text-green-600')}>
             {pct >= 80 ? 'Almost full!' : 'Seats available'}
           </div>
         </div>
 
+        {room.description && (
+          <div className="bg-white rounded-2xl p-5 mb-6 border border-green-100">
+            <h2 className="font-bold text-gray-900 mb-2">About this trip</h2>
+            <p className="text-sm text-gray-500 leading-relaxed">{room.description}</p>
+          </div>
+        )}
+
         <div className="bg-white rounded-2xl p-5 mb-6 border border-green-100">
           <h2 className="font-bold text-gray-900 mb-3">Itinerary Preview</h2>
-          <div className="space-y-2">
-            <div className="flex items-center gap-3 text-sm text-gray-600">
-              <span className="w-16 text-xs font-bold text-green-600">Day 1</span>
-              <span>Arrival + hotel check-in + local exploration</span>
+          {room.itineraries ? (
+            <div>
+              <div className="flex items-center gap-3 mb-3 flex-wrap">
+                <span className="text-xs font-bold bg-green-100 text-green-700 px-3 py-1 rounded-full">{room.itineraries.duration}</span>
+                <span className="text-xs font-bold bg-green-100 text-green-700 px-3 py-1 rounded-full">Rs.{room.itineraries.price?.toLocaleString()} per person</span>
+              </div>
+              <p className="text-sm text-gray-500 mb-3">{room.itineraries.description}</p>
+              <div className="space-y-2">
+                {room.itineraries.day_plan?.split('\n').slice(0, 2).map((day: string, i: number) => (
+                  <div key={i} className="flex items-start gap-3 text-sm text-gray-600">
+                    <span className="text-xs font-bold text-green-600 w-16 flex-shrink-0">{day.split(':')[0]}</span>
+                    <span>{day.split(':').slice(1).join(':')}</span>
+                  </div>
+                ))}
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="w-16 text-xs font-bold text-gray-400">More...</span>
+                  <span className="text-gray-400 italic">Full itinerary unlocks after joining</span>
+                </div>
+              </div>
+              <div className="mt-4 bg-green-50 rounded-xl p-3 border border-green-100">
+                <p className="text-xs text-green-700 font-medium">Join to unlock full day by day itinerary and hotel details!</p>
+              </div>
             </div>
-            <div className="flex items-center gap-3 text-sm text-gray-600">
-              <span className="w-16 text-xs font-bold text-green-600">Day 2</span>
-              <span>Main sightseeing + group activities</span>
-            </div>
-            <div className="flex items-center gap-3 text-sm text-gray-600">
-              <span className="w-16 text-xs font-bold text-green-600">Day 3+</span>
-              <span className="text-gray-400 italic">Full itinerary unlocks after joining</span>
-            </div>
-          </div>
-          <div className="mt-4 bg-green-50 rounded-xl p-3 border border-green-100">
-            <p className="text-xs text-green-700 font-medium">Pay Rs.199 to unlock full itinerary, hotel details, and meet your travel buddies!</p>
-          </div>
+          ) : (
+            <p className="text-sm text-gray-400">Itinerary coming soon!</p>
+          )}
         </div>
 
         <div className="bg-white rounded-2xl p-5 mb-6 border border-green-100">
           <h2 className="font-bold text-gray-900 mb-3">What is Included</h2>
           <div className="grid grid-cols-2 gap-2">
-            {['Hotel stay', 'Transport', 'Meals', 'Activities', 'Trip Captain', '24/7 Support'].map((item) => (
+            {(room.itineraries?.includes || 'Hotel stay, Transport, Meals, Activities, Trip Captain, 24/7 Support').split(',').map((item: string) => (
               <div key={item} className="flex items-center gap-2 text-sm text-gray-600">
                 <span className="text-green-500">✓</span>
-                <span>{item}</span>
+                <span>{item.trim()}</span>
               </div>
             ))}
           </div>
@@ -148,11 +164,11 @@ export default function RoomDetails() {
         <div className="sticky bottom-4">
           <button
             onClick={() => { window.location.href = '/rooms/' + id + '/join' }}
-            className="w-full py-4 rounded-2xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-base text-center hover:shadow-lg transition-all shadow-md"
+            className="w-full py-4 rounded-2xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-base text-center hover:shadow-lg transition-all shadow-md cursor-pointer"
           >
             Join This Room
           </button>
-          <p className="text-center text-xs text-gray-400 mt-2">Rs.199 token - Refundable within 24 hours</p>
+          <p className="text-center text-xs text-gray-400 mt-2">Free to join - Leave anytime within 24 hours</p>
         </div>
 
       </div>
