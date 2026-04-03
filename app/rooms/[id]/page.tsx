@@ -63,7 +63,8 @@ export default function RoomDetails() {
 
       <div className="pt-20 pb-16 px-4 md:px-16 max-w-3xl mx-auto">
 
-        <div className="bg-gradient-to-r from-green-700 to-green-500 rounded-3xl p-6 md:p-8 mb-6 text-white relative overflow-hidden">
+        <div className="rounded-3xl mb-6 text-white relative overflow-hidden" style={{backgroundImage: room.image_url ? 'url(' + room.image_url + ')' : 'linear-gradient(to right, #15803d, #22c55e)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+  <div className="absolute inset-0 bg-black/40 rounded-3xl" />
           <div className="absolute inset-0 opacity-10" style={{backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px'}} />
           <div className="relative z-10">
             <div className="flex items-center gap-2 mb-3 flex-wrap">
