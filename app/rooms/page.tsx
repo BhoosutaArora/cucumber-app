@@ -182,7 +182,63 @@ export default function Rooms() {
             {rooms.map((room: any) => {
               const pct = Math.round(((room.seats_filled || 0) / (room.seats_total || 10)) * 100)
               return (
-                <div key={room.id} className="bg-white rounded-2xl overflow-hidden border border-green-100 hover:-translate-y-1 hover:shadow-xl hover:shadow-green-100 transition-all duration-300">
+                <div key={room.id} className="bg-white rounded-2xl overflow-hidden border border-green-100 hover:-translate-y-1 hover:shadow-xl hover:shadow-green-100 transition-all duration-300 cursor-pointer">
+  
+  {/* PHOTO */}
+  <div className="relative h-48 overflow-hidden">
+    {room.image_url ? (
+      <img src={room.image_url} alt={room.name} className="w-full h-full object-cover" />
+    ) : (
+      <div className={'w-full h-full bg-gradient-to-br ' + (room.gradient || 'from-green-700 to-green-500')} />
+    )}
+    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+    <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
+      <div>
+        <div className="text-white font-extrabold text-lg leading-tight">{room.name}</div>
+        <div className="text-white/80 text-xs mt-0.5">📍 {room.destination}</div>
+      </div>
+      <span className="text-xs font-bold bg-white/20 backdrop-blur text-white px-2 py-1 rounded-full flex-shrink-0">
+        {room.vibe}
+      </span>
+    </div>
+  </div>
+
+  {/* DETAILS */}
+  <div className="p-4">
+    <div className="flex items-center justify-between mb-2">
+      <div>
+        <span className="text-xl font-extrabold text-green-700">₹{room.price?.toLocaleString()}</span>
+        <span className="text-xs text-gray-400 ml-1">per person</span>
+      </div>
+      <span className="text-xs text-gray-400">{room.dates}</span>
+    </div>
+    <div className="mb-3">
+      <div className="flex justify-between text-xs mb-1">
+        <span className="font-semibold text-gray-600">{room.seats_filled || 0} / {room.seats_total || 10} seats</span>
+        <span className={Math.round(((room.seats_filled || 0) / (room.seats_total || 10)) * 100) >= 80 ? 'text-orange-500 font-bold' : 'text-green-600 font-bold'}>
+          {Math.round(((room.seats_filled || 0) / (room.seats_total || 10)) * 100) >= 80 ? '🔥 Almost full' : '🌱 Open'}
+        </span>
+      </div>
+      <div className="h-1.5 bg-green-100 rounded-full overflow-hidden">
+        <div
+          className={'h-full rounded-full ' + (Math.round(((room.seats_filled || 0) / (room.seats_total || 10)) * 100) >= 80 ? 'bg-gradient-to-r from-orange-400 to-red-500' : 'bg-gradient-to-r from-green-400 to-green-500')}
+          style={{ width: Math.round(((room.seats_filled || 0) / (room.seats_total || 10)) * 100) + '%' }}
+        />
+      </div>
+    </div>
+    <div className="flex gap-2">
+      <button
+        onClick={() => handlePayment(room)}
+        className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white text-sm font-bold hover:shadow-lg transition-all cursor-pointer"
+      >
+        Join Room
+      </button>
+      <a href={'/rooms/' + room.id} className="px-4 py-2.5 rounded-xl border border-green-200 text-green-700 text-sm font-semibold hover:bg-green-50 transition-all cursor-pointer">
+        Details
+      </a>
+    </div>
+  </div>
+</div>
                   <div className={`h-1.5 w-full bg-gradient-to-r ${room.gradient || 'from-green-400 to-green-600'}`} />
                   <div className="p-4 md:p-5">
                     <div className="flex items-start justify-between mb-3">
