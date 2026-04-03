@@ -8,6 +8,8 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
   const [username, setUsername] = useState('')
+  const [age, setAge] = useState('')
+  const [gender, setGender] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [messageType, setMessageType] = useState('')
@@ -23,6 +25,10 @@ export default function Login() {
 
     if (isSignUp) {
       if (!username) { setMessage('Please choose a username 🥒'); setMessageType('error'); setLoading(false); return }
+      if (!age) { setMessage('Please enter your age 🥒'); setMessageType('error'); setLoading(false); return }
+      if (!gender) { setMessage('Please select your gender 🥒'); setMessageType('error'); setLoading(false); return }
+      if (parseInt(age) < 18) { setMessage('You must be 18+ to join Cucumber 🥒'); setMessageType('error'); setLoading(false); return }
+
       const { data, error } = await supabase.auth.signUp({ email, password })
       if (error) {
         setMessage(
@@ -37,6 +43,8 @@ export default function Login() {
             id: data.user.id,
             username: username.toLowerCase().trim(),
             email: email,
+            age: parseInt(age),
+            gender: gender,
           })
         }
         setMessage('We sent a confirmation email to ' + email + ' — check your inbox and spam folder and click the link to activate your account 🥒')
@@ -63,7 +71,7 @@ export default function Login() {
   async function handleGoogle() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/` }
+      options: { redirectTo: window.location.origin + '/' }
     })
     if (error) { setMessage(error.message); setMessageType('error') }
   }
@@ -93,7 +101,7 @@ export default function Login() {
             {isSignUp ? 'Start your travel journey today' : 'Your tribe is waiting for you'}
           </p>
 
-          <button onClick={handleGoogle} className="w-full flex items-center justify-center gap-3 border border-gray-200 rounded-xl py-2.5 md:py-3 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all mb-4">
+          <button onClick={handleGoogle} className="w-full flex items-center justify-center gap-3 border border-gray-200 rounded-xl py-2.5 md:py-3 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all mb-4 cursor-pointer">
             <svg width="18" height="18" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -110,16 +118,45 @@ export default function Login() {
           </div>
 
           {isSignUp && (
-            <div className="mb-3">
-              <label className="block text-xs font-bold text-gray-500 mb-1.5">Username</label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="e.g. Disappearing Penguine"
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
-              />
-            </div>
+            <>
+              <div className="mb-3">
+                <label className="block text-xs font-bold text-gray-500 mb-1.5">Username</label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="e.g. hills_over_malls"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
+                />
+              </div>
+              <div className="mb-3">
+                <label className="block text-xs font-bold text-gray-500 mb-1.5">Age (18+)</label>
+                <input
+                  type="number"
+                  value={age}
+                  onChange={(e) => setAge(e.target.value)}
+                  placeholder="e.g. 24"
+                  min="18"
+                  max="60"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
+                />
+              </div>
+              <div className="mb-3">
+                <label className="block text-xs font-bold text-gray-500 mb-1.5">Gender</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {['Male', 'Female', 'Other'].map((g) => (
+                    <button
+                      key={g}
+                      type="button"
+                      onClick={() => setGender(g)}
+                      className={'py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ' + (gender === g ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-600 border-gray-200 hover:border-green-300')}
+                    >
+                      {g}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
           )}
 
           <div className="mb-3">
@@ -146,7 +183,7 @@ export default function Login() {
           </div>
 
           {message && (
-            <div className={`text-sm font-medium px-4 py-3 rounded-xl mb-4 ${messageType === 'error' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-green-50 text-green-700 border border-green-100'}`}>
+            <div className={'text-sm font-medium px-4 py-3 rounded-xl mb-4 ' + (messageType === 'error' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-green-50 text-green-700 border border-green-100')}>
               {message}
             </div>
           )}
@@ -154,7 +191,7 @@ export default function Login() {
           <button
             onClick={handleAuth}
             disabled={loading}
-            className="w-full py-3 md:py-3.5 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:shadow-lg hover:shadow-green-200 hover:scale-[1.02] transition-all disabled:opacity-50"
+            className="w-full py-3 md:py-3.5 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:shadow-lg hover:shadow-green-200 hover:scale-[1.02] transition-all disabled:opacity-50 cursor-pointer"
           >
             {loading ? 'Please wait...' : isSignUp ? 'Create Account 🥒' : 'Sign In →'}
           </button>
@@ -162,7 +199,7 @@ export default function Login() {
           <p className="text-center text-sm text-gray-400 mt-5">
             {isSignUp ? 'Already have an account?' : "Don't have an account?"}
             {' '}
-            <button onClick={() => { setIsSignUp(!isSignUp); setMessage('') }} className="text-green-600 font-bold hover:underline">
+            <button onClick={() => { setIsSignUp(!isSignUp); setMessage('') }} className="text-green-600 font-bold hover:underline cursor-pointer">
               {isSignUp ? 'Sign in' : 'Sign up free'}
             </button>
           </p>
