@@ -9,58 +9,88 @@ export default function Chat() {
   const [messages, setMessages] = useState<any[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [sending, setSending] = useState(false)
-  const [roomId, setRoomId] = useState('spiti-valley-aug-14')
-  const [roomName, setRoomName] = useState('Adventure Squad 🏔️')
+  const [myRooms, setMyRooms] = useState<any[]>([])
+  const [selectedRoom, setSelectedRoom] = useState<any>(null)
+  const [roomMembers, setRoomMembers] = useState<any[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
-
-  const rooms = [
-    { id: 'spiti-valley-aug-14', name: 'Adventure Squad 🏔️', dest: 'Spiti Valley' },
-    { id: 'shimla-aug-2', name: 'Peaceful Escape 🌿', dest: 'Shimla' },
-    { id: 'jaipur-sep-5', name: 'Explorer Crew 🏛️', dest: 'Jaipur' },
-  ]
 
   useEffect(() => {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/login'; return }
       setUser(user)
+
+      const { data: memberships } = await supabase
+        .from('room_members')
+        .select('room_id')
+        .eq('user_id', user.id)
+
+      if (memberships && memberships.length > 0) {
+        const roomIds = memberships.map((m: any) => m.room_id)
+        const { data: rooms } = await supabase
+          .from('Rooms')
+          .select('*')
+          .in('id', roomIds)
+        setMyRooms(rooms || [])
+        if (rooms && rooms.length > 0) {
+          setSelectedRoom(rooms[0])
+        }
+      }
       setLoading(false)
     }
     init()
   }, [])
 
   useEffect(() => {
-    if (!user) return
+    if (!user || !selectedRoom) return
     setMessages([])
     fetchMessages()
+    fetchMembers()
 
     const channel = supabase
-      .channel('room-' + roomId)
+      .channel('room-' + selectedRoom.id)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
         table: 'messages',
-        filter: 'room_id=eq.' + roomId,
+        filter: 'room_id=eq.' + selectedRoom.id,
       }, (payload) => {
         setMessages((prev) => [...prev, payload.new])
         setTimeout(scrollToBottom, 100)
       })
-      .subscribe((status) => {
-        console.log('Realtime status:', status)
-      })
+      .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [user, roomId])
+  }, [user, selectedRoom])
 
   async function fetchMessages() {
     const { data } = await supabase
       .from('messages')
       .select('*')
-      .eq('room_id', roomId)
+      .eq('room_id', selectedRoom.id)
       .order('created_at', { ascending: true })
       .limit(100)
     setMessages(data || [])
     setTimeout(scrollToBottom, 100)
+  }
+
+  async function fetchMembers() {
+    const { data: membersRaw } = await supabase
+      .from('room_members')
+      .select('*')
+      .eq('room_id', selectedRoom.id)
+
+    const membersWithProfiles = await Promise.all(
+      (membersRaw || []).map(async (member: any) => {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('id', member.user_id)
+          .single()
+        return { ...member, username: profile?.username || 'Traveler' }
+      })
+    )
+    setRoomMembers(membersWithProfiles)
   }
 
   function scrollToBottom() {
@@ -68,10 +98,10 @@ export default function Chat() {
   }
 
   async function sendMessage() {
-    if (!newMessage.trim() || sending) return
+    if (!newMessage.trim() || sending || !selectedRoom) return
     setSending(true)
     const { error } = await supabase.from('messages').insert([{
-      room_id: roomId,
+      room_id: selectedRoom.id,
       sender_email: user.email,
       sender_name: user.user_metadata?.full_name || user.email?.split('@')[0],
       content: newMessage.trim(),
@@ -85,12 +115,6 @@ export default function Chat() {
       e.preventDefault()
       sendMessage()
     }
-  }
-
-  function switchRoom(room: any) {
-    setRoomId(room.id)
-    setRoomName(room.name)
-    setMessages([])
   }
 
   function getAvatar(email: string) {
@@ -118,6 +142,18 @@ export default function Chat() {
     )
   }
 
+  if (myRooms.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-4xl mb-4">🏠</div>
+          <div className="text-white font-bold mb-2">You are not in any rooms yet!</div>
+          <a href="/rooms" className="text-green-400 text-sm hover:underline">Browse Rooms</a>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <main className="h-screen bg-gray-950 font-sans flex flex-col">
 
@@ -125,7 +161,7 @@ export default function Chat() {
         <div className="flex items-center gap-3">
           <a href="/" className="text-lg font-extrabold text-green-400">cucumber<span className="text-white opacity-40">.</span></a>
           <span className="text-gray-600 hidden md:block">·</span>
-          <span className="text-sm font-bold text-white hidden md:block">{roomName}</span>
+          <span className="text-sm font-bold text-white hidden md:block">{selectedRoom?.name}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
@@ -139,36 +175,59 @@ export default function Chat() {
       <div className="flex flex-1 overflow-hidden">
 
         <div className="w-14 md:w-56 bg-gray-900 border-r border-gray-800 flex flex-col py-3 flex-shrink-0">
+
           <div className="text-xs font-bold text-gray-500 uppercase tracking-wider px-3 mb-2 hidden md:block">My Rooms</div>
-          {rooms.map((room) => (
+          {myRooms.map((room) => (
             <button
               key={room.id}
-              onClick={() => switchRoom(room)}
-              className={'flex items-center gap-3 px-2 md:px-3 py-2.5 mx-1.5 rounded-xl transition-all mb-1 text-left ' + (roomId === room.id ? 'bg-green-900 text-green-400' : 'text-gray-500 hover:bg-gray-800 hover:text-gray-300')}
+              onClick={() => setSelectedRoom(room)}
+              className={'flex items-center gap-3 px-2 md:px-3 py-2.5 mx-1.5 rounded-xl transition-all mb-1 text-left ' + (selectedRoom?.id === room.id ? 'bg-green-900 text-green-400' : 'text-gray-500 hover:bg-gray-800 hover:text-gray-300')}
             >
-              <div className={'w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ' + (roomId === room.id ? 'bg-green-600' : 'bg-gray-700')}>
-                {room.name[0]}
+              <div className={'w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ' + (selectedRoom?.id === room.id ? 'bg-green-600' : 'bg-gray-700')}>
+                {room.name?.[0] || 'R'}
               </div>
               <div className="hidden md:block overflow-hidden">
                 <div className="text-xs font-semibold truncate">{room.name}</div>
-                <div className="text-xs text-gray-500 truncate">{room.dest}</div>
+                <div className="text-xs text-gray-500 truncate">{room.destination}</div>
               </div>
             </button>
           ))}
+
+          <div className="border-t border-gray-800 mt-3 pt-3">
+            <div className="text-xs font-bold text-gray-500 uppercase tracking-wider px-3 mb-2 hidden md:block">Members ({roomMembers.length})</div>
+            {roomMembers.map((member) => (
+              <div
+                key={member.id}
+                className="flex items-center gap-2 px-2 md:px-3 py-2 mx-1.5 rounded-xl mb-1"
+              >
+                <div className="relative">
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                    {member.username[0].toUpperCase()}
+                  </div>
+                  <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-500 border border-gray-900"></div>
+                </div>
+                <div className="hidden md:block overflow-hidden">
+                  <div className="text-xs font-semibold text-gray-300 truncate">
+                    {member.username}
+                    {member.user_id === user?.id && <span className="text-green-500 ml-1">(you)</span>}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
         </div>
 
         <div className="flex-1 flex flex-col overflow-hidden">
 
           <div className="flex items-center justify-between px-4 py-3 bg-gray-900 border-b border-gray-800 flex-shrink-0">
             <div>
-              <div className="font-bold text-white text-sm">{roomName}</div>
+              <div className="font-bold text-white text-sm">{selectedRoom?.name}</div>
               <div className="text-xs text-gray-500">{messages.length} messages</div>
             </div>
-            <div className="flex items-center gap-2">
-              <a href="/reviews" className="text-xs font-semibold text-gray-400 border border-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-800 transition-all">
-                Reviews
-              </a>
-            </div>
+            <a href="/reviews" className="text-xs font-semibold text-gray-400 border border-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-800 transition-all">
+              Reviews
+            </a>
           </div>
 
           <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
@@ -177,7 +236,7 @@ export default function Chat() {
                 <div className="text-center">
                   <div className="text-4xl mb-3">💬</div>
                   <div className="font-bold text-gray-400 mb-1">No messages yet</div>
-                  <div className="text-xs text-gray-600">Be the first to say hello to your travel buddies!</div>
+                  <div className="text-xs text-gray-600">Be the first to say hello!</div>
                 </div>
               </div>
             ) : (
@@ -195,7 +254,7 @@ export default function Chat() {
                         {getAvatar(msg.sender_email)}
                       </div>
                     )}
-                    <div className={'max-w-[70%] ' + (isMe ? 'items-end' : 'items-start') + ' flex flex-col'}>
+                    <div className={'max-w-[70%] flex flex-col ' + (isMe ? 'items-end' : 'items-start')}>
                       {showAvatar && !isMe && (
                         <div className="text-xs text-gray-500 mb-1 ml-1">{msg.sender_name}</div>
                       )}
@@ -218,7 +277,7 @@ export default function Chat() {
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder={'Message ' + roomName + '...'}
+                  placeholder={'Message ' + (selectedRoom?.name || '') + '...'}
                   rows={1}
                   className="flex-1 bg-transparent text-white text-sm outline-none resize-none placeholder-gray-500 max-h-32"
                   style={{ lineHeight: '1.5' }}
