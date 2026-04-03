@@ -35,10 +35,6 @@ export default function Rooms() {
     checkUser()
   }, [])
 
-  async function handlePayment(room: any) {
-    window.location.href = '/rooms/' + room.id + '/join'
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen bg-green-50 flex items-center justify-center">
@@ -64,14 +60,14 @@ export default function Rooms() {
         </div>
         <div className="flex items-center gap-2">
           {username ? (
-            <a href="/dashboard" className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-1.5">
+            <a href="/dashboard" className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-1.5 cursor-pointer">
               <div className="w-6 h-6 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-xs font-bold">
                 {username[0].toUpperCase()}
               </div>
               <span className="text-xs md:text-sm font-semibold text-green-700">{username}</span>
             </a>
           ) : (
-            <a href="/login" className="text-xs md:text-sm font-semibold text-green-700 border border-green-200 px-3 md:px-5 py-1.5 md:py-2 rounded-xl hover:bg-green-50 transition-all">
+            <a href="/login" className="text-xs md:text-sm font-semibold text-green-700 border border-green-200 px-3 md:px-5 py-1.5 md:py-2 rounded-xl hover:bg-green-50 transition-all cursor-pointer">
               Sign in
             </a>
           )}
@@ -107,12 +103,12 @@ export default function Rooms() {
       <section className="px-4 md:px-16 py-4 md:py-5 bg-white border-b border-green-50 sticky top-14 md:top-16 z-40">
         <div className="max-w-7xl mx-auto flex items-center gap-2 md:gap-3 overflow-x-auto pb-1">
           {["All Vibes", "Adventure", "Peaceful", "Explorer", "Beach"].map((f, i) => (
-            <button key={f} className={'px-3 md:px-5 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-semibold border transition-all whitespace-nowrap ' + (i === 0 ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-500 border-gray-200 hover:border-green-300 hover:text-green-700')}>
+            <button key={f} className={'px-3 md:px-5 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-semibold border transition-all whitespace-nowrap cursor-pointer ' + (i === 0 ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-500 border-gray-200 hover:border-green-300 hover:text-green-700')}>
               {f}
             </button>
           ))}
           <div className="ml-auto flex-shrink-0">
-            <a href="/rooms/create" className="px-3 md:px-5 py-1.5 md:py-2 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white text-xs md:text-sm font-bold whitespace-nowrap">
+            <a href="/rooms/create" className="px-3 md:px-5 py-1.5 md:py-2 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white text-xs md:text-sm font-bold whitespace-nowrap cursor-pointer">
               + Create Room
             </a>
           </div>
@@ -131,9 +127,9 @@ export default function Rooms() {
             {rooms.map((room: any) => {
               const pct = Math.round(((room.seats_filled || 0) / (room.seats_total || 10)) * 100)
               return (
-                <div key={room.id} className="bg-white rounded-2xl overflow-hidden border border-green-100 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 cursor-pointer">
+                <div key={room.id} className="bg-white rounded-2xl overflow-hidden border border-green-100 hover:-translate-y-1 hover:shadow-xl transition-all duration-300">
 
-                  <div className="relative h-48 overflow-hidden">
+                  <div className="relative h-48 overflow-hidden cursor-pointer" onClick={() => { window.location.href = '/rooms/' + room.id }}>
                     {room.image_url ? (
                       <img src={room.image_url} alt={room.name} className="w-full h-full object-cover" />
                     ) : (
@@ -175,14 +171,17 @@ export default function Rooms() {
                     </div>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => handlePayment(room)}
+                        onClick={() => { window.location.href = '/rooms/' + room.id + '/join' }}
                         className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white text-sm font-bold hover:shadow-lg transition-all cursor-pointer"
                       >
                         Join Room
                       </button>
-                      <a href={'/rooms/' + room.id} className="px-4 py-2.5 rounded-xl border border-green-200 text-green-700 text-sm font-semibold hover:bg-green-50 transition-all">
+                      <button
+                        onClick={() => { window.location.href = '/rooms/' + room.id }}
+                        className="px-4 py-2.5 rounded-xl border border-green-200 text-green-700 text-sm font-semibold hover:bg-green-50 transition-all cursor-pointer"
+                      >
                         Details
-                      </a>
+                      </button>
                     </div>
                   </div>
 
