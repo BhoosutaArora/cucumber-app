@@ -31,23 +31,23 @@ export default function Chat() {
 
   useEffect(() => {
     if (!user) return
+    setMessages([])
     fetchMessages()
 
-    // Real-time subscription
-  const channel = supabase
-  .channel(`room-${roomId}`)
-  .on('postgres_changes', {
-    event: 'INSERT',
-    schema: 'public',
-    table: 'messages',
-    filter: `room_id=eq.${roomId}`,
-  }, (payload) => {
-    setMessages((prev) => [...prev, payload.new])
-    setTimeout(scrollToBottom, 100)
-  })
-  .subscribe((status) => {
-    console.log('Realtime status:', status)
-  })
+    const channel = supabase
+      .channel('room-' + roomId)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages',
+        filter: 'room_id=eq.' + roomId,
+      }, (payload) => {
+        setMessages((prev) => [...prev, payload.new])
+        setTimeout(scrollToBottom, 100)
+      })
+      .subscribe((status) => {
+        console.log('Realtime status:', status)
+      })
 
     return () => { supabase.removeChannel(channel) }
   }, [user, roomId])
@@ -70,14 +70,12 @@ export default function Chat() {
   async function sendMessage() {
     if (!newMessage.trim() || sending) return
     setSending(true)
-
     const { error } = await supabase.from('messages').insert([{
       room_id: roomId,
       sender_email: user.email,
-      sender_name: user.email?.split('@')[0],
+      sender_name: user.user_metadata?.full_name || user.email?.split('@')[0],
       content: newMessage.trim(),
     }])
-
     if (!error) setNewMessage('')
     setSending(false)
   }
@@ -123,7 +121,6 @@ export default function Chat() {
   return (
     <main className="h-screen bg-gray-950 font-sans flex flex-col">
 
-      {/* ── NAVBAR ── */}
       <nav className="flex items-center justify-between px-4 md:px-6 h-14 bg-gray-900 border-b border-gray-800 flex-shrink-0">
         <div className="flex items-center gap-3">
           <a href="/" className="text-lg font-extrabold text-green-400">cucumber<span className="text-white opacity-40">.</span></a>
@@ -141,16 +138,15 @@ export default function Chat() {
 
       <div className="flex flex-1 overflow-hidden">
 
-        {/* ── ROOMS SIDEBAR ── */}
         <div className="w-14 md:w-56 bg-gray-900 border-r border-gray-800 flex flex-col py-3 flex-shrink-0">
           <div className="text-xs font-bold text-gray-500 uppercase tracking-wider px-3 mb-2 hidden md:block">My Rooms</div>
           {rooms.map((room) => (
             <button
               key={room.id}
               onClick={() => switchRoom(room)}
-              className={`flex items-center gap-3 px-2 md:px-3 py-2.5 mx-1.5 rounded-xl transition-all mb-1 text-left ${roomId === room.id ? 'bg-green-900 text-green-400' : 'text-gray-500 hover:bg-gray-800 hover:text-gray-300'}`}
+              className={'flex items-center gap-3 px-2 md:px-3 py-2.5 mx-1.5 rounded-xl transition-all mb-1 text-left ' + (roomId === room.id ? 'bg-green-900 text-green-400' : 'text-gray-500 hover:bg-gray-800 hover:text-gray-300')}
             >
-              <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${roomId === room.id ? 'bg-green-600' : 'bg-gray-700'}`}>
+              <div className={'w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ' + (roomId === room.id ? 'bg-green-600' : 'bg-gray-700')}>
                 {room.name[0]}
               </div>
               <div className="hidden md:block overflow-hidden">
@@ -161,10 +157,8 @@ export default function Chat() {
           ))}
         </div>
 
-        {/* ── CHAT AREA ── */}
         <div className="flex-1 flex flex-col overflow-hidden">
 
-          {/* Room Header */}
           <div className="flex items-center justify-between px-4 py-3 bg-gray-900 border-b border-gray-800 flex-shrink-0">
             <div>
               <div className="font-bold text-white text-sm">{roomName}</div>
@@ -172,12 +166,11 @@ export default function Chat() {
             </div>
             <div className="flex items-center gap-2">
               <a href="/reviews" className="text-xs font-semibold text-gray-400 border border-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-800 transition-all">
-                ⭐ Reviews
+                Reviews
               </a>
             </div>
           </div>
 
-          {/* Messages */}
           <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
             {messages.length === 0 ? (
               <div className="flex-1 flex items-center justify-center">
@@ -192,22 +185,21 @@ export default function Chat() {
                 const isMe = msg.sender_email === user?.email
                 const prevMsg = messages[i - 1]
                 const showAvatar = !prevMsg || prevMsg.sender_email !== msg.sender_email
-
                 return (
-                  <div key={msg.id} className={`flex gap-2.5 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                  <div key={msg.id} className={'flex gap-2.5 ' + (isMe ? 'flex-row-reverse' : 'flex-row')}>
                     {!isMe && (
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${showAvatar ? 'opacity-100' : 'opacity-0'}`}
-                        style={{ background: getColor(msg.sender_email) }}>
+                      <div
+                        className={'w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ' + (showAvatar ? 'opacity-100' : 'opacity-0')}
+                        style={{ background: getColor(msg.sender_email) }}
+                      >
                         {getAvatar(msg.sender_email)}
                       </div>
                     )}
-                    <div className={`max-w-[70%] ${isMe ? 'items-end' : 'items-start'} flex flex-col`}>
+                    <div className={'max-w-[70%] ' + (isMe ? 'items-end' : 'items-start') + ' flex flex-col'}>
                       {showAvatar && !isMe && (
                         <div className="text-xs text-gray-500 mb-1 ml-1">{msg.sender_name}</div>
                       )}
-                      <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${isMe
-                        ? 'bg-gradient-to-br from-green-500 to-green-600 text-white rounded-tr-sm'
-                        : 'bg-gray-800 text-gray-200 rounded-tl-sm'}`}>
+                      <div className={'px-4 py-2.5 rounded-2xl text-sm leading-relaxed ' + (isMe ? 'bg-gradient-to-br from-green-500 to-green-600 text-white rounded-tr-sm' : 'bg-gray-800 text-gray-200 rounded-tl-sm')}>
                         {msg.content}
                       </div>
                       <div className="text-xs text-gray-600 mt-1 mx-1">{formatTime(msg.created_at)}</div>
@@ -219,7 +211,6 @@ export default function Chat() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Message Input */}
           <div className="px-4 py-3 bg-gray-900 border-t border-gray-800 flex-shrink-0">
             <div className="flex items-end gap-2">
               <div className="flex-1 bg-gray-800 rounded-2xl px-4 py-2.5 flex items-end gap-2">
@@ -227,7 +218,7 @@ export default function Chat() {
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder={`Message ${roomName}...`}
+                  placeholder={'Message ' + roomName + '...'}
                   rows={1}
                   className="flex-1 bg-transparent text-white text-sm outline-none resize-none placeholder-gray-500 max-h-32"
                   style={{ lineHeight: '1.5' }}
@@ -243,7 +234,7 @@ export default function Chat() {
                 </svg>
               </button>
             </div>
-            <div className="text-xs text-gray-600 mt-1.5 ml-1">Press Enter to send · Shift+Enter for new line</div>
+            <div className="text-xs text-gray-600 mt-1.5 ml-1">Press Enter to send</div>
           </div>
 
         </div>
