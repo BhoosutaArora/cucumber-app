@@ -11,6 +11,14 @@ export default function Dashboard() {
   const [newUsernameInput, setNewUsernameInput] = useState('')
   const [usernameError, setUsernameError] = useState('')
 
+  // Google users profile completion
+  const [showProfilePrompt, setShowProfilePrompt] = useState(false)
+  const [promptUsername, setPromptUsername] = useState('')
+  const [promptAgeGroup, setPromptAgeGroup] = useState('')
+  const [promptGender, setPromptGender] = useState('')
+  const [promptError, setPromptError] = useState('')
+  const [promptLoading, setPromptLoading] = useState(false)
+
   useEffect(() => {
     async function getUser() {
       const { data: { user } } = await supabase.auth.getUser()
@@ -20,13 +28,21 @@ export default function Dashboard() {
         setUser(user)
         const { data: profile } = await supabase
           .from('profiles')
-          .select('username')
+          .select('username, age_group, gender')
           .eq('id', user.id)
           .single()
+
         if (profile?.username) {
           setUsername(profile.username)
+          // Check if age_group or gender is missing — show prompt
+          if (!profile.age_group || !profile.gender) {
+            setShowProfilePrompt(true)
+            setPromptUsername(profile.username)
+          }
         } else {
-          // No profile found — just show email name as display, don't save anything
+          // No profile at all — show prompt to complete profile
+          setShowProfilePrompt(true)
+          setPromptUsername(user.user_metadata?.full_name?.split(' ')[0]?.toLowerCase() || '')
           setUsername(user.email?.split('@')[0] || 'Traveler')
         }
         setLoading(false)
@@ -34,6 +50,34 @@ export default function Dashboard() {
     }
     getUser()
   }, [])
+
+  async function handleProfilePromptSave() {
+    setPromptError('')
+    const cleaned = promptUsername.toLowerCase().trim()
+    if (cleaned.length < 3) { setPromptError('Username too short! Minimum 3 characters.'); return }
+    if (cleaned.length > 20) { setPromptError('Username too long! Maximum 20 characters.'); return }
+    if (!/^[a-z0-9_]+$/.test(cleaned)) { setPromptError('Only letters, numbers and underscores allowed!'); return }
+    if (!promptAgeGroup) { setPromptError('Please select your age group!'); return }
+    if (!promptGender) { setPromptError('Please select your gender!'); return }
+
+    setPromptLoading(true)
+    const { error } = await supabase.from('profiles').upsert({
+      id: user.id,
+      username: cleaned,
+      email: user.email,
+      age_group: promptAgeGroup,
+      gender: promptGender,
+    })
+
+    if (error) {
+      setPromptError('This username is already taken! Try another one 🥒')
+      setPromptLoading(false)
+    } else {
+      setUsername(cleaned)
+      setShowProfilePrompt(false)
+      setPromptLoading(false)
+    }
+  }
 
   async function handleSignOut() {
     await supabase.auth.signOut()
@@ -56,6 +100,81 @@ export default function Dashboard() {
 
   return (
     <div>
+
+      {/* ── GOOGLE USERS PROFILE PROMPT ── */}
+      {showProfilePrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div className="bg-gradient-to-br from-green-700 to-green-500 px-6 py-5 text-center">
+              <p className="text-2xl mb-1">🥒</p>
+              <h2 className="text-white font-extrabold text-lg">Complete your profile!</h2>
+              <p className="text-green-200 text-xs mt-1">Just a few details so your travel buddies know you</p>
+            </div>
+            <div className="px-6 py-5">
+
+              {/* Username */}
+              <div className="mb-4">
+                <label className="block text-xs font-bold text-gray-500 mb-1.5">Username</label>
+                <input
+                  type="text"
+                  value={promptUsername}
+                  onChange={(e) => { setPromptUsername(e.target.value); setPromptError('') }}
+                  placeholder="e.g. hills_over_malls"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
+                />
+              </div>
+
+              {/* Age Group */}
+              <div className="mb-4">
+                <label className="block text-xs font-bold text-gray-500 mb-1.5">Age Group</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {['18-24', '25-30', '31+'].map((a) => (
+                    <button
+                      key={a}
+                      type="button"
+                      onClick={() => setPromptAgeGroup(a)}
+                      className={'py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ' + (promptAgeGroup === a ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-600 border-gray-200 hover:border-green-300')}
+                    >
+                      {a}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Gender */}
+              <div className="mb-4">
+                <label className="block text-xs font-bold text-gray-500 mb-1.5">Gender</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {['Male', 'Female', 'Other'].map((g) => (
+                    <button
+                      key={g}
+                      type="button"
+                      onClick={() => setPromptGender(g)}
+                      className={'py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ' + (promptGender === g ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-600 border-gray-200 hover:border-green-300')}
+                    >
+                      {g}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {promptError && (
+                <div className="text-xs text-red-500 font-medium mb-3">{promptError}</div>
+              )}
+
+              <button
+                onClick={handleProfilePromptSave}
+                disabled={promptLoading}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:shadow-lg transition-all cursor-pointer disabled:opacity-50"
+              >
+                {promptLoading ? 'Saving...' : 'Save & Continue 🥒'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── USERNAME MODAL ── */}
       {showUsernameModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
