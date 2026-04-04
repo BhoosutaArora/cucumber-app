@@ -5,9 +5,7 @@ import { useParams } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 
 declare global {
-  interface Window {
-    Razorpay: any
-  }
+  interface Window { Razorpay: any }
 }
 
 export default function RoomPage() {
@@ -25,7 +23,6 @@ export default function RoomPage() {
   const [paymentLoading, setPaymentLoading] = useState(false)
 
   useEffect(() => {
-    // Load Razorpay script
     const script = document.createElement('script')
     script.src = 'https://checkout.razorpay.com/v1/checkout.js'
     script.async = true
@@ -60,9 +57,7 @@ export default function RoomPage() {
     }
     if (id) load()
 
-    return () => {
-      document.body.removeChild(script)
-    }
+    return () => { document.body.removeChild(script) }
   }, [id])
 
   async function loadMembers() {
@@ -95,17 +90,24 @@ export default function RoomPage() {
   }
 
   async function markReady() {
-    await supabase.from('room_members').update({ is_ready: true }).eq('room_id', id).eq('user_id', user.id)
-    setMyMembership({ ...myMembership, is_ready: true })
-    await loadMembers()
+    const { error } = await supabase
+      .from('room_members')
+      .update({ is_ready: true })
+      .eq('room_id', id)
+      .eq('user_id', user.id)
+
+    if (!error) {
+      setMyMembership((prev: any) => ({ ...prev, is_ready: true }))
+      await loadMembers()
+    }
   }
 
   async function sealRoom() {
     setSealing(true)
     await supabase.from('Rooms').update({ is_sealed: true }).eq('id', id)
-    setRoom({ ...room, is_sealed: true })
+    setRoom((prev: any) => ({ ...prev, is_sealed: true }))
     setSealing(false)
-    alert('Room sealed! Video call is now unlocked!')
+    alert('Room sealed! Video call is now unlocked! 🥒')
   }
 
   async function voteToKick(targetId: string, targetUsername: string) {
@@ -121,8 +123,10 @@ export default function RoomPage() {
     const allVotes = updatedVotes || []
     setKickVotes(allVotes)
 
-    const votesAgainstTarget = allVotes.filter(v => v.target_id === targetId).length
-    const totalMembers = members.length
+    // Get fresh member count
+    const { data: freshMembers } = await supabase.from('room_members').select('*').eq('room_id', id)
+    const totalMembers = (freshMembers || []).length
+    const votesAgainstTarget = allVotes.filter((v: any) => v.target_id === targetId).length
     const majorityReached = votesAgainstTarget > totalMembers / 2
 
     if (majorityReached) {
@@ -140,22 +144,11 @@ export default function RoomPage() {
   async function handleVideoCall() {
     setPaymentLoading(true)
     try {
-      // Create order on server
       const res = await fetch('/api/razorpay-order', { method: 'POST' })
       const { orderId, error } = await res.json()
+      if (error || !orderId) { alert('Payment setup failed. Please try again!'); setPaymentLoading(false); return }
 
-      if (error || !orderId) {
-        alert('Payment setup failed. Please try again!')
-        setPaymentLoading(false)
-        return
-      }
-
-      // Get user profile for prefill
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('username, email')
-        .eq('id', user.id)
-        .single()
+      const { data: profile } = await supabase.from('profiles').select('username, email').eq('id', user.id).single()
 
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
@@ -165,27 +158,18 @@ export default function RoomPage() {
         description: 'Video Call Token — Refundable within 24 hours',
         image: '/favicon.ico',
         order_id: orderId,
-        prefill: {
-          name: profile?.username || '',
-          email: user?.email || '',
-        },
+        prefill: { name: profile?.username || '', email: user?.email || '' },
         theme: { color: '#4CAF50' },
-        handler: async function (response: any) {
-          // Payment successful!
+        handler: async function () {
           alert('Payment successful! 🥒 Joining video call...')
           setPaymentLoading(false)
           window.location.href = '/video-call'
         },
-        modal: {
-          ondismiss: function () {
-            setPaymentLoading(false)
-          }
-        }
+        modal: { ondismiss: function () { setPaymentLoading(false) } }
       }
 
       const rzp = new window.Razorpay(options)
       rzp.open()
-
     } catch (err) {
       console.error(err)
       alert('Something went wrong. Please try again!')
@@ -204,9 +188,11 @@ export default function RoomPage() {
     )
   }
 
+  // Calculate ready count from fresh members data
   const readyCount = members.filter(m => m.is_ready).length
   const totalCount = members.length
-  const halfReached = readyCount >= Math.ceil(totalCount / 2)
+  const halfReached = totalCount > 0 && readyCount >= Math.ceil(totalCount / 2)
+  const iAmReady = myMembership?.is_ready === true
 
   return (
     <main className="min-h-screen bg-green-50 font-sans">
@@ -218,7 +204,7 @@ export default function RoomPage() {
             <div className="text-3xl mb-3 text-center">🥒</div>
             <h2 className="text-lg font-extrabold text-gray-900 text-center mb-2">Welcome to the room!</h2>
             <p className="text-sm text-gray-500 text-center mb-4 leading-relaxed">
-              This room can be sealed once minimum half the members click Ready. Once sealed, video call unlocks and you can meet your travel buddies before paying!
+              This room can be sealed once minimum half the members click Ready. Once sealed, video call unlocks!
             </p>
             <button onClick={() => { setShowPopup(false); markReady() }} className="w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold cursor-pointer hover:shadow-lg transition-all">
               Got it — I am Ready!
@@ -261,21 +247,19 @@ export default function RoomPage() {
             <div className="h-2 bg-green-100 rounded-full overflow-hidden mb-3">
               <div className="h-full bg-gradient-to-r from-green-400 to-green-500 rounded-full transition-all" style={{ width: totalCount > 0 ? (readyCount / totalCount * 100) + '%' : '0%' }} />
             </div>
-            {!myMembership?.is_ready ? (
+            {!iAmReady ? (
               <button onClick={markReady} className="w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm cursor-pointer hover:shadow-lg transition-all">
                 I am Ready to Travel!
               </button>
             ) : (
-              <div className="text-center text-sm text-green-600 font-semibold py-2">You are ready! Waiting for others...</div>
+              <div className="text-center text-sm text-green-600 font-semibold py-2">✅ You are ready! Waiting for others...</div>
             )}
             {halfReached && (
               <button onClick={sealRoom} disabled={sealing} className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-500 to-purple-600 text-white font-bold text-sm mt-3 cursor-pointer hover:shadow-lg transition-all disabled:opacity-50">
                 {sealing ? 'Sealing...' : 'Seal the Room!'}
               </button>
             )}
-            {halfReached && (
-              <p className="text-xs text-center text-purple-600 font-medium mt-2">Minimum members reached! Room can be sealed now.</p>
-            )}
+            {halfReached && <p className="text-xs text-center text-purple-600 font-medium mt-2">Minimum members reached! Room can be sealed now.</p>}
           </div>
         )}
 
@@ -335,11 +319,8 @@ export default function RoomPage() {
             Group Chat
           </div>
           {room?.is_sealed ? (
-            <div
-              onClick={!paymentLoading ? handleVideoCall : undefined}
-              className={`py-4 rounded-2xl font-bold text-sm text-center transition-all cursor-pointer ${paymentLoading ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-green-400 to-green-500 text-white hover:shadow-lg'}`}
-            >
-              {paymentLoading ? 'Opening payment...' : '🎥 Video Call — ₹199'}
+            <div onClick={!paymentLoading ? handleVideoCall : undefined} className={`py-4 rounded-2xl font-bold text-sm text-center transition-all cursor-pointer ${paymentLoading ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-green-400 to-green-500 text-white hover:shadow-lg'}`}>
+              {paymentLoading ? 'Opening...' : '🎥 Video Call — ₹199'}
             </div>
           ) : (
             <div className="py-4 rounded-2xl bg-gray-100 text-gray-400 font-bold text-sm text-center cursor-not-allowed">
@@ -348,34 +329,29 @@ export default function RoomPage() {
           )}
         </div>
 
-      
-{room?.is_sealed && (
-  <div className="bg-green-50 rounded-2xl border border-green-100 p-4 mb-4">
-    <div className="text-xs text-green-700 font-semibold mb-2">💡 About the ₹199 token</div>
-    <div className="text-xs text-gray-500 leading-relaxed mb-3">This is a refundable token to confirm your intent before paying the full amount.</div>
-    <div className="border-t border-green-100 pt-3">
-      <div className="text-xs text-green-700 font-semibold mb-2">📋 Refund Policy</div>
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-center gap-2 text-xs text-gray-500">
-          <span className="text-green-500 font-bold">✓</span>
-          <span>₹199 token — full refund within 24 hours of payment</span>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-gray-500">
-          <span className="text-green-500 font-bold">✓</span>
-          <span>₹6,999 trip — 90% back if cancelled 30+ days before</span>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-gray-500">
-          <span className="text-yellow-500 font-bold">~</span>
-          <span>₹6,999 trip — 50% back if cancelled 15–30 days before</span>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-gray-500">
-          <span className="text-red-400 font-bold">✕</span>
-          <span>No refund if cancelled less than 15 days before trip</span>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
+        {/* REFUND INFO */}
+        {room?.is_sealed && (
+          <div className="bg-green-50 rounded-2xl border border-green-100 p-4 mb-4">
+            <div className="text-xs text-green-700 font-semibold mb-2">💡 About the ₹199 token</div>
+            <div className="text-xs text-gray-500 leading-relaxed mb-3">This is a refundable token to confirm your intent before paying the full amount.</div>
+            <div className="border-t border-green-100 pt-3">
+              <div className="text-xs text-green-700 font-semibold mb-2">📋 Refund Policy</div>
+              <div className="flex flex-col gap-1.5">
+                {[
+                  { icon: '✓', color: 'text-green-500', text: '₹199 token — full refund within 24 hours' },
+                  { icon: '✓', color: 'text-green-500', text: '₹3,499 trip — 90% back if cancelled 30+ days before' },
+                  { icon: '~', color: 'text-yellow-500', text: '₹3,499 trip — 50% back if cancelled 15–30 days before' },
+                  { icon: '✕', color: 'text-red-400', text: 'No refund if cancelled less than 15 days before trip' },
+                ].map((item) => (
+                  <div key={item.text} className="flex items-center gap-2 text-xs text-gray-500">
+                    <span className={`font-bold ${item.color}`}>{item.icon}</span>
+                    <span>{item.text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ITINERARY */}
         <div className="bg-white rounded-2xl border border-green-100 p-5 mb-4">

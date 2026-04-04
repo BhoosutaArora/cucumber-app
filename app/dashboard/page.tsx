@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
 export default function Dashboard() {
@@ -18,6 +18,12 @@ export default function Dashboard() {
   const [promptGender, setPromptGender] = useState('')
   const [promptError, setPromptError] = useState('')
   const [promptLoading, setPromptLoading] = useState(false)
+
+  // T&C for Google users
+  const [showTerms, setShowTerms] = useState(false)
+  const [termsChecked, setTermsChecked] = useState(false)
+  const [hasScrolled, setHasScrolled] = useState(false)
+  const termsBoxRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     async function getUser() {
@@ -49,8 +55,14 @@ export default function Dashboard() {
     getUser()
   }, [])
 
-  async function handleProfilePromptSave() {
-    setPromptError('')
+  function handleTermsScroll() {
+    const el = termsBoxRef.current
+    if (!el) return
+    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 20
+    if (atBottom) setHasScrolled(true)
+  }
+
+  function handleContinueClick() {
     const cleaned = promptUsername.toLowerCase().trim()
     if (cleaned.length < 3) { setPromptError('Username too short! Minimum 3 characters.'); return }
     if (cleaned.length > 20) { setPromptError('Username too long! Maximum 20 characters.'); return }
@@ -58,6 +70,16 @@ export default function Dashboard() {
     if (!promptAgeGroup) { setPromptError('Please select your age group!'); return }
     if (!promptGender) { setPromptError('Please select your gender!'); return }
 
+    // Show T&C
+    setShowTerms(true)
+    setTermsChecked(false)
+    setHasScrolled(false)
+    setPromptError('')
+  }
+
+  async function handleProfilePromptSave() {
+    setShowTerms(false)
+    const cleaned = promptUsername.toLowerCase().trim()
     setPromptLoading(true)
     const { error } = await supabase.from('profiles').upsert({
       id: user.id,
@@ -99,8 +121,66 @@ export default function Dashboard() {
   return (
     <div>
 
+      {/* ── T&C POPUP FOR GOOGLE USERS ── */}
+      {showTerms && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center px-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="bg-gradient-to-br from-green-700 to-green-500 px-6 py-5 text-center">
+              <p className="text-2xl mb-1">📋</p>
+              <h2 className="text-white font-extrabold text-lg">Terms & Conditions</h2>
+              <p className="text-green-200 text-xs mt-1">Please read carefully before joining Cucumber</p>
+            </div>
+            <div ref={termsBoxRef} onScroll={handleTermsScroll} className="px-6 py-4 overflow-y-auto max-h-64 text-sm text-gray-700 space-y-4 border-b border-gray-100">
+              <div>
+                <p className="font-bold text-gray-900 mb-1">🪪 1. Bring Your Aadhaar Card</p>
+                <p>You must carry a valid government-issued photo ID to the trip meetup point. Without valid ID, you may be denied entry to the trip.</p>
+              </div>
+              <div>
+                <p className="font-bold text-gray-900 mb-1">✅ 2. Provide Accurate Details</p>
+                <p>All information you provide must be true and accurate. Providing false information may result in removal from the platform without refund.</p>
+              </div>
+              <div>
+                <p className="font-bold text-gray-900 mb-1">🧍 3. You Are Responsible for Your Conduct</p>
+                <p>You are solely responsible for your behavior during the trip. Cucumber is not liable for any personal disputes or incidents during the trip.</p>
+              </div>
+              <div>
+                <p className="font-bold text-gray-900 mb-1">🔞 4. Age Requirement</p>
+                <p>You confirm that you are at least 18 years of age. Minors are strictly not permitted on Cucumber trips.</p>
+              </div>
+              <div>
+                <p className="font-bold text-gray-900 mb-1">💸 5. Payments & Refunds</p>
+                <p>₹199 token is refundable within 24 hours. Full trip payment refund depends on cancellation timing. No refund within 15 days of trip.</p>
+              </div>
+              <div>
+                <p className="font-bold text-gray-900 mb-1">🚫 6. Zero Tolerance Policy</p>
+                <p>Any harassment or misconduct will result in immediate removal and permanent ban. No refund in such cases.</p>
+              </div>
+              <div>
+                <p className="font-bold text-gray-900 mb-1">📞 7. Emergency Contact</p>
+                <p className="pb-2">Cucumber may contact you via WhatsApp for trip updates and emergencies. By signing up you consent to these messages.</p>
+              </div>
+            </div>
+            {!hasScrolled && (
+              <p className="text-center text-xs text-gray-400 pt-3 px-6 animate-bounce">↓ Scroll down to read all terms</p>
+            )}
+            <div className="px-6 pt-3 pb-4">
+              <label className={`flex items-start gap-3 cursor-pointer select-none ${!hasScrolled ? 'opacity-40 pointer-events-none' : ''}`}>
+                <input type="checkbox" checked={termsChecked} onChange={(e) => setTermsChecked(e.target.checked)} className="mt-0.5 w-4 h-4 accent-green-500 cursor-pointer flex-shrink-0" />
+                <span className="text-xs text-gray-600 leading-relaxed">I have read and agree to Cucumber's Terms & Conditions. I confirm I will carry valid ID and am responsible for my own conduct.</span>
+              </label>
+            </div>
+            <div className="px-6 pb-6 flex gap-3">
+              <button onClick={() => setShowTerms(false)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-500 hover:bg-gray-50 transition-all cursor-pointer">Cancel</button>
+              <button onClick={handleProfilePromptSave} disabled={!termsChecked || promptLoading} className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer">
+                {promptLoading ? 'Saving...' : 'I Agree & Join 🥒'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── GOOGLE USERS PROFILE PROMPT ── */}
-      {showProfilePrompt && (
+      {showProfilePrompt && !showTerms && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
             <div className="bg-gradient-to-br from-green-700 to-green-500 px-6 py-5 text-center">
@@ -111,13 +191,9 @@ export default function Dashboard() {
             <div className="px-6 py-5">
               <div className="mb-4">
                 <label className="block text-xs font-bold text-gray-500 mb-1.5">Username</label>
-                <input
-                  type="text"
-                  value={promptUsername}
-                  onChange={(e) => { setPromptUsername(e.target.value); setPromptError('') }}
+                <input type="text" value={promptUsername} onChange={(e) => { setPromptUsername(e.target.value); setPromptError('') }}
                   placeholder="e.g. hills_over_malls"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
-                />
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all" />
               </div>
               <div className="mb-4">
                 <label className="block text-xs font-bold text-gray-500 mb-1.5">Age Group</label>
@@ -142,9 +218,9 @@ export default function Dashboard() {
                 </div>
               </div>
               {promptError && <div className="text-xs text-red-500 font-medium mb-3">{promptError}</div>}
-              <button onClick={handleProfilePromptSave} disabled={promptLoading}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:shadow-lg transition-all cursor-pointer disabled:opacity-50">
-                {promptLoading ? 'Saving...' : 'Save & Continue 🥒'}
+              <button onClick={handleContinueClick}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:shadow-lg transition-all cursor-pointer">
+                Continue →
               </button>
             </div>
           </div>
@@ -160,23 +236,19 @@ export default function Dashboard() {
               <h2 className="text-xl font-extrabold text-gray-900">Choose your username</h2>
               <p className="text-xs text-gray-400 mt-1">Letters, numbers and underscores only. 3-20 characters.</p>
             </div>
-            <input type="text" value={newUsernameInput}
-              onChange={(e) => { setNewUsernameInput(e.target.value); setUsernameError('') }}
+            <input type="text" value={newUsernameInput} onChange={(e) => { setNewUsernameInput(e.target.value); setUsernameError('') }}
               placeholder="e.g. hills_over_malls"
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all mb-3"
-            />
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all mb-3" />
             {usernameError && <div className="text-xs text-red-500 font-medium mb-3">{usernameError}</div>}
-            <button
-              onClick={async () => {
-                const cleaned = newUsernameInput.toLowerCase().trim()
-                if (cleaned.length < 3) { setUsernameError('Too short! Minimum 3 characters.'); return }
-                if (cleaned.length > 20) { setUsernameError('Too long! Maximum 20 characters.'); return }
-                if (!/^[a-z0-9_]+$/.test(cleaned)) { setUsernameError('Only letters, numbers and underscores allowed!'); return }
-                const { error } = await supabase.from('profiles').upsert({ id: user.id, username: cleaned, email: user.email })
-                if (error) { setUsernameError('This username is already taken! Try another one 🥒') }
-                else { setUsername(cleaned); setShowUsernameModal(false); setNewUsernameInput('') }
-              }}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:shadow-lg transition-all mb-2 cursor-pointer">
+            <button onClick={async () => {
+              const cleaned = newUsernameInput.toLowerCase().trim()
+              if (cleaned.length < 3) { setUsernameError('Too short! Minimum 3 characters.'); return }
+              if (cleaned.length > 20) { setUsernameError('Too long! Maximum 20 characters.'); return }
+              if (!/^[a-z0-9_]+$/.test(cleaned)) { setUsernameError('Only letters, numbers and underscores allowed!'); return }
+              const { error } = await supabase.from('profiles').upsert({ id: user.id, username: cleaned, email: user.email })
+              if (error) { setUsernameError('This username is already taken! Try another one 🥒') }
+              else { setUsername(cleaned); setShowUsernameModal(false); setNewUsernameInput('') }
+            }} className="w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:shadow-lg transition-all mb-2 cursor-pointer">
               Save Username 🥒
             </button>
             <button onClick={() => { setShowUsernameModal(false); setNewUsernameInput(''); setUsernameError('') }}
@@ -206,8 +278,7 @@ export default function Dashboard() {
               </div>
               <span className="text-xs md:text-sm font-semibold text-green-700 hidden sm:block">{userName}</span>
             </div>
-            <button onClick={handleSignOut}
-              className="text-xs md:text-sm font-semibold text-gray-500 border border-gray-200 px-3 py-1.5 rounded-xl hover:bg-gray-50 transition-all cursor-pointer">
+            <button onClick={handleSignOut} className="text-xs md:text-sm font-semibold text-gray-500 border border-gray-200 px-3 py-1.5 rounded-xl hover:bg-gray-50 transition-all cursor-pointer">
               Sign out
             </button>
           </div>
@@ -262,7 +333,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* recommended room — REAL ONLY */}
+              {/* real room */}
               <div className="bg-white rounded-2xl border border-green-100 overflow-hidden">
                 <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-green-50">
                   <div className="font-bold text-gray-900 text-base md:text-lg">Open Now</div>
@@ -271,11 +342,7 @@ export default function Dashboard() {
                 <div className="p-5">
                   <div className="rounded-xl border border-green-100 overflow-hidden hover:-translate-y-1 hover:shadow-lg transition-all">
                     <div className="h-32 relative overflow-hidden">
-                      <img
-                        src="https://qutczfwmdqlpeslqcwnt.supabase.co/storage/v1/object/public/image/yash-kiran-qxp9X5t9hQ4-unsplash.jpg"
-                        alt="Shimla"
-                        className="w-full h-full object-cover"
-                      />
+                      <img src="https://qutczfwmdqlpeslqcwnt.supabase.co/storage/v1/object/public/image/yash-kiran-qxp9X5t9hQ4-unsplash.jpg" alt="Shimla" className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                       <span className="absolute bottom-2 left-2 text-xs font-bold text-white bg-black/30 px-2 py-1 rounded-lg">📍 Shimla, HP</span>
                     </div>
@@ -319,8 +386,7 @@ export default function Dashboard() {
                       </div>
                     ))}
                   </div>
-                  <button onClick={() => setShowUsernameModal(true)}
-                    className="w-full mt-3 md:mt-4 py-2 rounded-xl border border-green-200 text-green-700 text-sm font-semibold hover:bg-green-50 transition-all cursor-pointer">
+                  <button onClick={() => setShowUsernameModal(true)} className="w-full mt-3 md:mt-4 py-2 rounded-xl border border-green-200 text-green-700 text-sm font-semibold hover:bg-green-50 transition-all cursor-pointer">
                     Edit Profile ✏️
                   </button>
                 </div>
@@ -335,8 +401,7 @@ export default function Dashboard() {
                   { icon: '🎥', label: 'Video Call', href: '/video-call' },
                   { icon: '💬', label: 'Group Chat', href: '/chat' },
                 ].map((action) => (
-                  <a key={action.label} href={action.href}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-green-50 transition-all cursor-pointer mb-1">
+                  <a key={action.label} href={action.href} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-green-50 transition-all cursor-pointer mb-1">
                     <span className="text-base md:text-lg">{action.icon}</span>
                     <span className="text-xs md:text-sm font-semibold text-gray-700">{action.label}</span>
                     <span className="ml-auto text-gray-300 text-sm">→</span>
@@ -347,9 +412,7 @@ export default function Dashboard() {
               {/* account info */}
               <div className="bg-green-50 rounded-2xl border border-green-100 p-4">
                 <div className="font-bold text-green-700 text-xs md:text-sm mb-2">✅ Account Active</div>
-                <div className="text-xs text-gray-500 leading-relaxed">
-                  Complete your profile to unlock all features and join travel rooms.
-                </div>
+                <div className="text-xs text-gray-500 leading-relaxed">Complete your profile to unlock all features and join travel rooms.</div>
                 <div className="mt-3 h-2 bg-green-200 rounded-full overflow-hidden">
                   <div className="h-full w-1/4 bg-gradient-to-r from-green-400 to-green-500 rounded-full" />
                 </div>
