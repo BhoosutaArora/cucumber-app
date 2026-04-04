@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
 export default function Login() {
@@ -13,6 +13,13 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [messageType, setMessageType] = useState('')
+  useEffect(() => {
+  const params = new URLSearchParams(window.location.search)
+  if (params.get('confirmed') === 'true') {
+    setMessage('Your email is confirmed! Now sign in below 🥒')
+    setMessageType('success')
+  }
+}, [])
 
   // T&C popup states
   const [showTerms, setShowTerms] = useState(false)

@@ -1,9 +1,11 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 
 export default function ConfirmPage() {
+  const [status, setStatus] = useState<'confirming' | 'success' | 'error'>('confirming')
+
   useEffect(() => {
     const { searchParams } = new URL(window.location.href)
     const token_hash = searchParams.get('token_hash')
@@ -13,9 +15,16 @@ export default function ConfirmPage() {
       supabase.auth.verifyOtp({ token_hash, type: type as any })
         .then(({ error }) => {
           if (!error) {
-            window.location.href = '/dashboard'
+            setStatus('success')
+            // Give user 2 seconds to see the success message, then go to login
+            setTimeout(() => {
+              window.location.href = '/login?confirmed=true'
+            }, 2000)
           } else {
-            window.location.href = '/login?error=confirmation_failed'
+            setStatus('error')
+            setTimeout(() => {
+              window.location.href = '/login?error=confirmation_failed'
+            }, 2000)
           }
         })
     }
@@ -29,14 +38,24 @@ export default function ConfirmPage() {
       justifyContent: 'center',
       height: '100vh',
       background: '#F0FAF0',
-      fontFamily: 'sans-serif'
+      fontFamily: 'sans-serif',
+      padding: '24px',
+      textAlign: 'center'
     }}>
-      <div style={{ fontSize: '48px', marginBottom: '16px' }}>🥒</div>
-      <p style={{ color: '#2E7D32', fontWeight: 'bold', fontSize: '18px' }}>
-        Confirming your email...
+      <div style={{ fontSize: '56px', marginBottom: '16px' }}>
+        {status === 'confirming' && '🥒'}
+        {status === 'success' && '✅'}
+        {status === 'error' && '❌'}
+      </div>
+      <p style={{ color: '#2E7D32', fontWeight: 'bold', fontSize: '20px', marginBottom: '8px' }}>
+        {status === 'confirming' && 'Confirming your email...'}
+        {status === 'success' && 'Email confirmed!'}
+        {status === 'error' && 'Something went wrong'}
       </p>
-      <p style={{ color: '#6B7280', fontSize: '14px', marginTop: '8px' }}>
-        Just a second!
+      <p style={{ color: '#6B7280', fontSize: '14px' }}>
+        {status === 'confirming' && 'Just a second!'}
+        {status === 'success' && 'Taking you to sign in now... 🥒'}
+        {status === 'error' && 'Taking you back to login...'}
       </p>
     </main>
   )
