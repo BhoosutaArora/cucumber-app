@@ -44,346 +44,171 @@ export default function Home() {
   const pct = room ? Math.round(((room.seats_filled || 0) / room.seats_total) * 100) : 0
 
   return (
-    <main className="min-h-screen font-sans" style={{background: '#0a0a0a', color: '#fff'}}>
-
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap');
-        * { font-family: 'DM Sans', sans-serif; }
-        .display { font-family: 'Syne', sans-serif; }
-        @keyframes float { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-12px)} }
-        @keyframes pulse-ring { 0%{transform:scale(1);opacity:0.8} 100%{transform:scale(1.8);opacity:0} }
-        @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
-        @keyframes slide-up { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes glow { 0%,100%{box-shadow:0 0 20px rgba(74,222,128,0.3)} 50%{box-shadow:0 0 40px rgba(74,222,128,0.6)} }
-        .float { animation: float 4s ease-in-out infinite; }
-        .slide-up { animation: slide-up 0.8s ease forwards; }
-        .slide-up-2 { animation: slide-up 0.8s ease 0.2s forwards; opacity:0; }
-        .slide-up-3 { animation: slide-up 0.8s ease 0.4s forwards; opacity:0; }
-        .slide-up-4 { animation: slide-up 0.8s ease 0.6s forwards; opacity:0; }
-        .glow-btn { animation: glow 2s ease-in-out infinite; }
-        .shimmer-text {
-          background: linear-gradient(90deg, #4ade80 0%, #86efac 25%, #ffffff 50%, #86efac 75%, #4ade80 100%);
-          background-size: 200% auto;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          animation: shimmer 3s linear infinite;
-        }
-        .card-hover { transition: transform 0.3s ease, box-shadow 0.3s ease; }
-        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 60px rgba(74,222,128,0.15); }
-        .pulse-dot::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          border-radius: 50%;
-          background: #4ade80;
-          animation: pulse-ring 1.5s ease-out infinite;
-        }
-      `}</style>
+    <main className="min-h-screen bg-white font-sans">
 
       {/* ── NAVBAR ── */}
-      <nav style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '0 24px', height: '60px',
-        background: 'rgba(10,10,10,0.8)',
-        backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255,255,255,0.06)'
-      }}>
-        <div className="display" style={{fontSize: '22px', fontWeight: 800, color: '#4ade80', letterSpacing: '-0.5px'}}>
-          cucumber<span style={{color: 'rgba(255,255,255,0.2)'}}>.</span>
+      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 md:px-12 h-14 md:h-16 bg-white border-b border-green-100 shadow-sm">
+        <div className="text-xl md:text-2xl font-extrabold text-green-700 tracking-tight">
+          cucumber<span className="text-green-400">.</span>
         </div>
-        <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+        <div className="hidden md:flex items-center gap-8">
+          <a href="/rooms" className="text-sm font-medium text-gray-500 cursor-pointer hover:text-green-700 transition-colors">Rooms</a>
+          <a href="/dashboard" className="text-sm font-medium text-gray-500 cursor-pointer hover:text-green-700 transition-colors">Dashboard</a>
+        </div>
+        <div className="flex items-center gap-2 md:gap-3">
           {username ? (
-            <a href="/dashboard" style={{
-              display: 'flex', alignItems: 'center', gap: '8px',
-              background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)',
-              borderRadius: '12px', padding: '6px 14px', textDecoration: 'none'
-            }}>
-              <div style={{
-                width: '24px', height: '24px', borderRadius: '50%',
-                background: 'linear-gradient(135deg, #4ade80, #16a34a)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '11px', fontWeight: 800, color: '#000'
-              }}>
+            <a href="/dashboard" className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-1.5">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-xs font-bold">
                 {username[0].toUpperCase()}
               </div>
-              <span style={{fontSize: '13px', fontWeight: 600, color: '#4ade80'}}>{username}</span>
+              <span className="text-xs md:text-sm font-semibold text-green-700">{username}</span>
             </a>
           ) : (
-            <a href="/login" style={{
-              fontSize: '13px', fontWeight: 600, color: '#9ca3af',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: '10px', padding: '7px 16px', textDecoration: 'none',
-              transition: 'all 0.2s'
-            }}>Sign in</a>
+            <a href="/login" className="text-xs md:text-sm font-semibold text-green-700 border border-green-200 px-3 md:px-5 py-1.5 md:py-2 rounded-xl hover:bg-green-50 transition-all">
+              Sign in
+            </a>
           )}
-          <a href="/rooms" style={{
-            fontSize: '13px', fontWeight: 700, color: '#000',
-            background: 'linear-gradient(135deg, #4ade80, #22c55e)',
-            borderRadius: '10px', padding: '7px 18px', textDecoration: 'none',
-          }}>
+          <a href="/rooms" className="text-xs md:text-sm font-bold text-white bg-gradient-to-r from-green-400 to-green-500 px-3 md:px-5 py-1.5 md:py-2 rounded-xl hover:shadow-lg transition-all">
             Find Room →
           </a>
         </div>
       </nav>
 
       {/* ── HERO ── */}
-      <section style={{
-        minHeight: '100vh', display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
-        paddingTop: '80px', paddingBottom: '60px',
-        position: 'relative', overflow: 'hidden',
-        padding: '80px 24px 60px'
-      }}>
-        {/* Background blobs */}
-        <div style={{
-          position: 'absolute', top: '10%', left: '50%', transform: 'translateX(-50%)',
-          width: '600px', height: '600px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(74,222,128,0.08) 0%, transparent 70%)',
-          pointerEvents: 'none'
-        }} />
-        <div style={{
-          position: 'absolute', bottom: '20%', left: '5%',
-          width: '300px', height: '300px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(74,222,128,0.05) 0%, transparent 70%)',
-          pointerEvents: 'none'
-        }} />
+      <section className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-hidden pt-14 md:pt-16 px-5 md:px-8">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_100%_70%_at_50%_0%,#C8F0C0,transparent_65%)] pointer-events-none" />
+        <div className="absolute top-20 right-5 md:right-10 w-40 md:w-72 h-40 md:h-72 rounded-full bg-gradient-to-br from-green-200 to-green-400 opacity-10 animate-pulse" />
+        <div className="absolute bottom-20 left-5 md:left-10 w-28 md:w-48 h-28 md:h-48 rounded-full bg-gradient-to-br from-green-300 to-green-500 opacity-10 animate-pulse" />
 
-        {/* Live badge */}
-        <div className="slide-up" style={{
-          display: 'inline-flex', alignItems: 'center', gap: '8px',
-          background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.2)',
-          borderRadius: '100px', padding: '8px 16px', marginBottom: '32px'
-        }}>
-          <div className="pulse-dot" style={{position: 'relative', width: '8px', height: '8px', borderRadius: '50%', background: '#4ade80'}} />
-          <span style={{fontSize: '12px', fontWeight: 600, color: '#4ade80'}}>Shimla trip open now — {seatsLeft > 0 ? `${seatsLeft} seats left` : 'filling fast!'}</span>
-        </div>
-
-        {/* Main heading */}
-        <h1 className="display slide-up-2" style={{
-          fontSize: 'clamp(42px, 8vw, 96px)',
-          fontWeight: 800, lineHeight: 1.0,
-          textAlign: 'center', letterSpacing: '-2px',
-          marginBottom: '24px', maxWidth: '900px'
-        }}>
-          Travel with strangers<br />
-          <span className="shimmer-text">who get you.</span>
-        </h1>
-
-        <p className="slide-up-3" style={{
-          fontSize: 'clamp(14px, 2vw, 18px)', color: '#6b7280',
-          textAlign: 'center', maxWidth: '500px',
-          lineHeight: 1.7, marginBottom: '40px'
-        }}>
-          Small curated rooms of 8–10 people. Same vibe, real connections, unforgettable trips.
-        </p>
-
-        {/* CTA Buttons */}
-        <div className="slide-up-4" style={{display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '80px'}}>
-          <a href="/rooms" className="glow-btn" style={{
-            padding: '14px 32px', borderRadius: '14px',
-            background: 'linear-gradient(135deg, #4ade80, #16a34a)',
-            color: '#000', fontWeight: 800, fontSize: '15px',
-            textDecoration: 'none', display: 'inline-block'
-          }}>
-            Join Shimla Trip 🏔️
-          </a>
-          <a href="/login" style={{
-            padding: '14px 32px', borderRadius: '14px',
-            background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            color: '#fff', fontWeight: 600, fontSize: '15px',
-            textDecoration: 'none', display: 'inline-block'
-          }}>
-            How it works ↓
-          </a>
-        </div>
-
-        {/* Stats */}
-        <div style={{
-          display: 'flex', gap: '48px', flexWrap: 'wrap', justifyContent: 'center'
-        }}>
-          {[
-            { num: '4 Days', label: '3 Nights in Shimla' },
-            { num: '₹6,999', label: 'All inclusive' },
-            { num: '8–10', label: 'People per room' },
-            { num: '4.9 ⭐', label: 'Avg trip rating' },
-          ].map((s) => (
-            <div key={s.label} style={{textAlign: 'center'}}>
-              <div className="display" style={{fontSize: '22px', fontWeight: 800, color: '#4ade80'}}>{s.num}</div>
-              <div style={{fontSize: '12px', color: '#4b5563', marginTop: '4px'}}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── LIVE ROOM CARD ── */}
-      <section style={{
-        padding: '80px 24px',
-        background: 'linear-gradient(180deg, #0a0a0a 0%, #0d1a0d 50%, #0a0a0a 100%)'
-      }}>
-        <div style={{maxWidth: '600px', margin: '0 auto'}}>
-          <div style={{textAlign: 'center', marginBottom: '40px'}}>
-            <div style={{fontSize: '11px', fontWeight: 700, color: '#4ade80', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '12px'}}>Live Now</div>
-            <h2 className="display" style={{fontSize: 'clamp(28px, 5vw, 48px)', fontWeight: 800, letterSpacing: '-1px'}}>
-              One trip. Your tribe.
-            </h2>
+        <div className="relative z-10 text-center max-w-5xl w-full">
+          <div className="inline-flex items-center gap-2 bg-white border border-green-200 rounded-full px-3 md:px-4 py-1.5 md:py-2 text-xs font-bold text-green-700 mb-6 md:mb-8 shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-ping inline-block" />
+            Shimla trip is open — {seatsLeft > 0 ? `${seatsLeft} seats left!` : 'filling fast!'}
           </div>
 
-          {/* Real room card */}
-          <div className="card-hover" style={{
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(74,222,128,0.2)',
-            borderRadius: '24px', overflow: 'hidden'
-          }}>
-            {/* Room image / gradient header */}
-            <div style={{
-              height: '200px',
-              background: 'linear-gradient(135deg, #052e16 0%, #14532d 50%, #052e16 100%)',
-              position: 'relative', display: 'flex', alignItems: 'flex-end', padding: '20px'
-            }}>
-              <div style={{
-                position: 'absolute', inset: 0,
-                backgroundImage: 'radial-gradient(circle at 30% 50%, rgba(74,222,128,0.15) 0%, transparent 60%)',
-              }} />
-              <div className="float" style={{
-                position: 'absolute', right: '24px', top: '24px',
-                fontSize: '64px'
-              }}>🏔️</div>
-              <div style={{position: 'relative', zIndex: 1}}>
-                <div style={{
-                  display: 'inline-block',
-                  background: 'rgba(74,222,128,0.2)', border: '1px solid rgba(74,222,128,0.4)',
-                  borderRadius: '100px', padding: '4px 12px',
-                  fontSize: '11px', fontWeight: 700, color: '#4ade80', marginBottom: '8px'
-                }}>
-                  ✅ APPROVED · OPEN
-                </div>
-                <div className="display" style={{fontSize: '24px', fontWeight: 800, color: '#fff'}}>
-                  {room?.name || 'Peaceful Escape'}
-                </div>
-                <div style={{fontSize: '13px', color: '#86efac', marginTop: '4px'}}>
-                  📍 {room?.destination || 'Shimla, HP'} · {room?.dates || 'Aug 2–5, 2026'}
-                </div>
-              </div>
-            </div>
+          <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-extrabold leading-none tracking-tight text-gray-900 mb-5 md:mb-6">
+            Travel <span className="text-green-500">together</span><br />
+            with strangers<br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-600">who get it.</span>
+          </h1>
 
-            {/* Room details */}
-            <div style={{padding: '24px'}}>
-              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px'}}>
-                <div style={{fontSize: '13px', color: '#6b7280'}}>
-                  {membersCount} member{membersCount !== 1 ? 's' : ''} joined
-                </div>
-                <div style={{fontSize: '13px', fontWeight: 700, color: seatsLeft <= 2 ? '#f87171' : '#4ade80'}}>
-                  {seatsLeft > 0 ? `${seatsLeft} seats left` : 'Full!'}
-                </div>
-              </div>
+          <p className="text-sm md:text-lg text-gray-500 leading-relaxed max-w-xl mx-auto mb-8 md:mb-10">
+            Cucumber connects you to small, curated travel rooms of 8–10 people who share your exact travel vibe. No boring group tours. No lonely solo trips.
+          </p>
 
-              {/* Progress bar */}
-              <div style={{height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '100px', marginBottom: '24px', overflow: 'hidden'}}>
-                <div style={{
-                  height: '100%', borderRadius: '100px',
-                  width: `${pct}%`,
-                  background: 'linear-gradient(90deg, #4ade80, #86efac)',
-                  transition: 'width 1s ease'
-                }} />
-              </div>
-
-              {/* Details grid */}
-              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '24px'}}>
-                {[
-                  { icon: '💰', label: 'Price', value: `₹${room?.price?.toLocaleString() || '6,999'}` },
-                  { icon: '👥', label: 'Group size', value: `${room?.seats_total || 10} people` },
-                  { icon: '🎯', label: 'Vibe', value: room?.vibe || 'Peaceful' },
-                  { icon: '📅', label: 'Duration', value: '4 Days 3 Nights' },
-                ].map((d) => (
-                  <div key={d.label} style={{
-                    background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(255,255,255,0.06)',
-                    borderRadius: '12px', padding: '12px'
-                  }}>
-                    <div style={{fontSize: '18px', marginBottom: '4px'}}>{d.icon}</div>
-                    <div style={{fontSize: '11px', color: '#4b5563', marginBottom: '2px'}}>{d.label}</div>
-                    <div style={{fontSize: '14px', fontWeight: 700, color: '#e5e7eb'}}>{d.value}</div>
-                  </div>
-                ))}
-              </div>
-
-              <a href="/rooms/2" style={{
-                display: 'block', textAlign: 'center',
-                padding: '14px', borderRadius: '14px',
-                background: 'linear-gradient(135deg, #4ade80, #16a34a)',
-                color: '#000', fontWeight: 800, fontSize: '15px',
-                textDecoration: 'none'
-              }}>
-                View Room & Join →
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── HOW IT WORKS ── */}
-      <section style={{padding: '80px 24px', background: '#0a0a0a'}}>
-        <div style={{maxWidth: '800px', margin: '0 auto'}}>
-          <div style={{textAlign: 'center', marginBottom: '56px'}}>
-            <div style={{fontSize: '11px', fontWeight: 700, color: '#4ade80', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '12px'}}>How it works</div>
-            <h2 className="display" style={{fontSize: 'clamp(28px, 5vw, 48px)', fontWeight: 800, letterSpacing: '-1px'}}>
-              Stranger → Travel buddy<br />in 4 steps.
-            </h2>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 mb-10 md:mb-16">
+            <a href="/rooms/2" className="w-full sm:w-auto px-8 py-3.5 md:py-4 rounded-2xl bg-gradient-to-r from-green-400 to-green-500 text-white font-extrabold text-sm md:text-base shadow-lg shadow-green-200 hover:shadow-xl hover:scale-105 transition-all text-center">
+              Join Shimla Trip →
+            </a>
+            <a href="/login" className="w-full sm:w-auto px-7 py-3.5 md:py-4 rounded-2xl border-2 border-green-200 text-green-700 font-bold text-sm md:text-base bg-white hover:bg-green-50 transition-all text-center">
+              Create account free
+            </a>
           </div>
 
-          <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px'}}>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-16">
             {[
-              { num: '01', icon: '🪪', title: 'Sign up', desc: 'Create profile, verify your ID' },
-              { num: '02', icon: '🏠', title: 'Join a room', desc: 'Pick your vibe, see who\'s in' },
-              { num: '03', icon: '🎥', title: 'Video call', desc: 'Meet the group before you go' },
-              { num: '04', icon: '✈️', title: 'Travel!', desc: 'Show up, make memories' },
+              { num: '4 Days', label: '3 Nights Shimla' },
+              { num: '₹6,999', label: 'All inclusive' },
+              { num: '8–10', label: 'People per room' },
+              { num: '🥒', label: 'Made in India' },
             ].map((s) => (
-              <div key={s.num} className="card-hover" style={{
-                background: 'rgba(255,255,255,0.02)',
-                border: '1px solid rgba(255,255,255,0.06)',
-                borderRadius: '20px', padding: '24px', textAlign: 'center'
-              }}>
-                <div className="display" style={{fontSize: '13px', fontWeight: 700, color: 'rgba(74,222,128,0.4)', marginBottom: '12px'}}>{s.num}</div>
-                <div style={{fontSize: '32px', marginBottom: '12px'}}>{s.icon}</div>
-                <div style={{fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '8px'}}>{s.title}</div>
-                <div style={{fontSize: '12px', color: '#4b5563', lineHeight: 1.6}}>{s.desc}</div>
+              <div key={s.label} className="text-center">
+                <div className="text-xl md:text-3xl font-extrabold text-green-700">{s.num}</div>
+                <div className="text-xs text-gray-400 mt-1">{s.label}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── FOOTER ── */}
-      <footer style={{
-        padding: '48px 24px',
-        background: '#050505',
-        borderTop: '1px solid rgba(255,255,255,0.05)'
-      }}>
-        <div style={{maxWidth: '600px', margin: '0 auto', textAlign: 'center'}}>
-          <div className="display" style={{fontSize: '28px', fontWeight: 800, color: '#4ade80', marginBottom: '12px'}}>
-            cucumber<span style={{color: 'rgba(255,255,255,0.15)'}}>.</span>
+      {/* ── LIVE ROOM ── */}
+      <section className="w-full bg-green-50 py-14 md:py-24 px-4 md:px-16">
+        <div className="text-center mb-10 md:mb-14">
+          <div className="text-xs font-bold text-green-500 uppercase tracking-widest mb-3">Live Now</div>
+          <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-gray-900 mb-3">One trip. Your tribe.</h2>
+          <p className="text-sm md:text-base text-gray-500">Our first Shimla trip is open. Be part of something real.</p>
+        </div>
+
+        {/* Real room card */}
+        <div className="max-w-sm mx-auto bg-white rounded-2xl overflow-hidden border border-green-100 hover:-translate-y-1 hover:shadow-xl transition-all duration-300">
+          <div className="h-48 bg-gradient-to-br from-green-900 to-green-700 relative flex items-end p-4">
+            <div className="absolute inset-0 opacity-20" style={{backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px'}} />
+            <span className="text-xs font-bold text-white bg-black/30 px-3 py-1 rounded-lg relative z-10">
+              📍 {room?.destination || 'Shimla, HP'}
+            </span>
           </div>
-          <p style={{fontSize: '13px', color: '#374151', marginBottom: '24px', lineHeight: 1.6}}>
-            Social travel for people who want real connections, not just destinations.
-          </p>
+          <div className="p-5">
+            <div className="font-bold text-gray-900 text-lg mb-1">{room?.name || 'Peaceful Escape 🌿'}</div>
+            <div className="text-xs text-gray-400 mb-1">{room?.dates || 'Aug 2–5, 2026'}</div>
+            <div className="text-xs text-gray-400 mb-3">{membersCount} member{membersCount !== 1 ? 's' : ''} joined · {seatsLeft} seats left</div>
 
-          {/* Instagram link */}
-          <a href="https://instagram.com/cucumbertravel.in" target="_blank" style={{
-            display: 'inline-flex', alignItems: 'center', gap: '8px',
-            background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: '12px', padding: '10px 20px', textDecoration: 'none',
-            color: '#9ca3af', fontSize: '13px', fontWeight: 600,
-            marginBottom: '32px', transition: 'all 0.2s'
-          }}>
-            📸 @cucumbertravel.in
-          </a>
-
-          <div style={{borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '24px'}}>
-            <div style={{fontSize: '12px', color: '#1f2937'}}>
-              © 2025 Cucumber Travel · Made with 🥒 in India
+            <div className="h-1.5 bg-green-100 rounded-full mb-4 overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-green-400 to-green-500 rounded-full transition-all" style={{width: `${pct}%`}} />
             </div>
+
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <div className="text-xs text-gray-400">Price per person</div>
+                <div className="text-lg font-extrabold text-green-700">₹{room?.price?.toLocaleString() || '6,999'}</div>
+              </div>
+              <div className={`text-xs font-bold px-3 py-1 rounded-full ${seatsLeft <= 2 ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-600'}`}>
+                {seatsLeft <= 2 ? '🔥 Almost full!' : `🌱 ${seatsLeft} seats open`}
+              </div>
+            </div>
+
+            <a href="/rooms/2" className="block w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm text-center hover:scale-105 transition-transform">
+              View Room & Join →
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ── HOW IT WORKS ── */}
+      <section className="w-full bg-white py-14 md:py-24 px-4 md:px-16">
+        <div className="text-center mb-10 md:mb-14">
+          <div className="text-xs font-bold text-green-500 uppercase tracking-widest mb-3">How it works</div>
+          <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-gray-900">From stranger to travel buddy<br />in 4 steps.</h2>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 max-w-7xl mx-auto">
+          {[
+            {num:'01', icon:'🪪', title:'Sign up & verify', desc:'Create your profile and upload your government ID.'},
+            {num:'02', icon:'🏠', title:'Join a room', desc:'Pick a destination and vibe. See exactly who\'s already in.'},
+            {num:'03', icon:'🎥', title:'Video call first', desc:'Pay ₹199 token to meet your travel buddies on video before committing.'},
+            {num:'04', icon:'✈️', title:'Travel together', desc:'Show up, meet your tribe, make memories.'},
+          ].map((s) => (
+            <div key={s.num} className="text-center p-4 md:p-8">
+              <div className="text-4xl md:text-6xl font-extrabold text-green-100 leading-none mb-3 md:mb-4">{s.num}</div>
+              <div className="w-10 h-10 md:w-14 md:h-14 rounded-2xl bg-green-50 border border-green-100 flex items-center justify-center text-lg md:text-2xl mx-auto mb-3 md:mb-4">{s.icon}</div>
+              <div className="font-bold text-gray-900 text-sm md:text-lg mb-2">{s.title}</div>
+              <div className="text-xs md:text-sm text-gray-400 leading-relaxed">{s.desc}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── FOOTER ── */}
+      <footer className="w-full bg-gray-950 py-10 md:py-16 px-4 md:px-16">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
+            <div>
+              <div className="text-xl md:text-2xl font-extrabold text-green-400 mb-2">cucumber<span className="text-white opacity-40">.</span></div>
+              <div className="text-xs md:text-sm text-gray-500 leading-relaxed max-w-xs">Social travel for people who want real connections, not just destinations.</div>
+            </div>
+            <div className="flex flex-col items-center md:items-end gap-3">
+              <div className="text-xs font-bold text-gray-500 uppercase tracking-widest">Contact us</div>
+              <a
+                href="https://instagram.com/cucumbertravel.in"
+                target="_blank"
+                className="flex items-center gap-2 bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 hover:border-green-800 transition-all"
+              >
+                <span className="text-lg">📸</span>
+                <span className="text-sm font-semibold text-gray-300">@cucumbertravel.in</span>
+              </a>
+            </div>
+          </div>
+          <div className="flex flex-col md:flex-row items-center justify-between border-t border-gray-800 pt-6 gap-3">
+            <span className="text-xs text-gray-600 text-center">© 2025 Cucumber Travel · Made with 🥒 in India</span>
+            <span className="text-xs text-gray-600">All rights reserved</span>
           </div>
         </div>
       </footer>
