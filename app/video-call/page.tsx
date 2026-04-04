@@ -216,9 +216,13 @@ export default function VideoCall() {
       <div
         ref={jitsiContainerRef}
         style={{
-          display: callStarted ? 'flex' : 'none',
-          flex: 1,
-          minHeight: 'calc(100vh - 56px)'
+          display: callStarted ? 'block' : 'none',
+          position: 'fixed',
+          top: '56px',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 40,
         }}
       />
 
