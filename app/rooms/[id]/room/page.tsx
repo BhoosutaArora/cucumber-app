@@ -14,6 +14,8 @@ export default function RoomPage() {
   const [myMembership, setMyMembership] = useState<any>(null)
   const [showPopup, setShowPopup] = useState(false)
   const [sealing, setSealing] = useState(false)
+  const [kickVotes, setKickVotes] = useState<any[]>([])
+  const [kickingId, setKickingId] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -40,6 +42,7 @@ export default function RoomPage() {
       setRoom(roomData)
 
       await loadMembers()
+      await loadKickVotes()
       setLoading(false)
     }
     if (id) load()
@@ -69,6 +72,14 @@ export default function RoomPage() {
     setMembers(membersWithProfiles)
   }
 
+  async function loadKickVotes() {
+    const { data } = await supabase
+      .from('kick_votes')
+      .select('*')
+      .eq('room_id', id)
+    setKickVotes(data || [])
+  }
+
   async function markReady() {
     await supabase.from('room_members').update({ is_ready: true }).eq('room_id', id).eq('user_id', user.id)
     setMyMembership({ ...myMembership, is_ready: true })
@@ -81,6 +92,56 @@ export default function RoomPage() {
     setRoom({ ...room, is_sealed: true })
     setSealing(false)
     alert('Room sealed! Video call is now unlocked!')
+  }
+
+  async function voteToKick(targetId: string, targetUsername: string) {
+    if (targetId === user.id) return
+
+    // Check if already voted
+    const alreadyVoted = kickVotes.some(v => v.voter_id === user.id && v.target_id === targetId)
+    if (alreadyVoted) {
+      alert('You already voted to kick ' + targetUsername + '!')
+      return
+    }
+
+    if (!confirm('Vote to kick ' + targetUsername + '? If majority agrees they will be removed.')) return
+
+    setKickingId(targetId)
+
+    // Save vote
+    await supabase.from('kick_votes').insert({
+      room_id: id,
+      voter_id: user.id,
+      target_id: targetId,
+    })
+
+    // Reload votes
+    const { data: updatedVotes } = await supabase
+      .from('kick_votes')
+      .select('*')
+      .eq('room_id', id)
+
+    const allVotes = updatedVotes || []
+    setKickVotes(allVotes)
+
+    // Count votes against this target
+    const votesAgainstTarget = allVotes.filter(v => v.target_id === targetId).length
+    const totalMembers = members.length
+    const majorityReached = votesAgainstTarget > totalMembers / 2
+
+    if (majorityReached) {
+      // Kick the person!
+      await supabase.from('room_members').delete().eq('room_id', id).eq('user_id', targetId)
+      // Clean up their kick votes
+      await supabase.from('kick_votes').delete().eq('room_id', id).eq('target_id', targetId)
+      alert(targetUsername + ' has been removed from the room by majority vote.')
+      await loadMembers()
+      await loadKickVotes()
+    } else {
+      alert('Vote recorded! ' + votesAgainstTarget + '/' + totalMembers + ' votes to kick ' + targetUsername + '. Need majority to remove.')
+    }
+
+    setKickingId(null)
   }
 
   if (loading) {
@@ -176,36 +237,69 @@ export default function RoomPage() {
             <p className="text-gray-400 text-sm">No members yet!</p>
           ) : (
             <div className="space-y-2">
-              {members.map((member: any) => (
-                <div
-                  key={member.id}
-                  onClick={() => { window.location.href = '/profile/' + member.username }}
-                  className="flex items-center gap-3 hover:bg-green-50 rounded-xl p-2 transition-all cursor-pointer"
-                >
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold flex-shrink-0">
-                    {member.username[0].toUpperCase()}
+              {members.map((member: any) => {
+                const votesAgainstMember = kickVotes.filter(v => v.target_id === member.user_id).length
+                const iHaveVoted = kickVotes.some(v => v.voter_id === user?.id && v.target_id === member.user_id)
+                const isMe = member.user_id === user?.id
+
+                return (
+                  <div key={member.id} className="flex items-center gap-3 hover:bg-green-50 rounded-xl p-2 transition-all">
+                    {/* Avatar — clickable to profile */}
+                    <div
+                      onClick={() => { window.location.href = '/profile/' + member.username }}
+                      className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold flex-shrink-0 cursor-pointer"
+                    >
+                      {member.username[0].toUpperCase()}
+                    </div>
+
+                    {/* Name + details */}
+                    <div
+                      onClick={() => { window.location.href = '/profile/' + member.username }}
+                      className="flex-1 cursor-pointer"
+                    >
+                      <div className="font-semibold text-gray-900 text-sm">{member.username}</div>
+                      {(member.age_group || member.gender) && (
+                        <div className="text-xs text-gray-400 mt-0.5">
+                          {[member.age_group, member.gender].filter(Boolean).join(' · ')}
+                        </div>
+                      )}
+                      {/* Show kick vote count if any */}
+                      {votesAgainstMember > 0 && !isMe && (
+                        <div className="text-xs text-red-400 mt-0.5 font-medium">
+                          ⚠️ {votesAgainstMember}/{totalCount} kick votes
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Badges + kick button */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {member.is_ready ? (
+                        <span className="text-xs bg-green-100 text-green-700 font-bold px-2 py-1 rounded-full">Ready</span>
+                      ) : (
+                        <span className="text-xs bg-gray-100 text-gray-500 font-bold px-2 py-1 rounded-full">Thinking...</span>
+                      )}
+                      {isMe && (
+                        <span className="text-xs bg-blue-100 text-blue-700 font-bold px-2 py-1 rounded-full">You</span>
+                      )}
+                      {/* Kick button — only shown for other members */}
+                      {!isMe && (
+                        <button
+                          onClick={() => voteToKick(member.user_id, member.username)}
+                          disabled={iHaveVoted || kickingId === member.user_id}
+                          className={`text-xs font-bold px-2 py-1 rounded-full transition-all cursor-pointer ${
+                            iHaveVoted
+                              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                              : 'bg-red-50 text-red-500 hover:bg-red-100 border border-red-200'
+                          }`}
+                          title={iHaveVoted ? 'Already voted' : 'Vote to kick'}
+                        >
+                          {kickingId === member.user_id ? '...' : iHaveVoted ? '✓ Voted' : '👢 Kick'}
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <div className="font-semibold text-gray-900 text-sm">{member.username}</div>
-                    {/* ── AGE GROUP + GENDER shown only inside room ── */}
-                    {(member.age_group || member.gender) && (
-                      <div className="text-xs text-gray-400 mt-0.5">
-                        {[member.age_group, member.gender].filter(Boolean).join(' · ')}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {member.is_ready ? (
-                      <span className="text-xs bg-green-100 text-green-700 font-bold px-2 py-1 rounded-full">Ready</span>
-                    ) : (
-                      <span className="text-xs bg-gray-100 text-gray-500 font-bold px-2 py-1 rounded-full">Thinking...</span>
-                    )}
-                    {member.user_id === user?.id && (
-                      <span className="text-xs bg-blue-100 text-blue-700 font-bold px-2 py-1 rounded-full">You</span>
-                    )}
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
