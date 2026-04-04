@@ -9,7 +9,6 @@ export default function CreateRoom() {
   const [form, setForm] = useState({
     name: '',
     gender_preference: 'any',
-    is_private: false,
   })
 
   useEffect(() => {
@@ -22,8 +21,8 @@ export default function CreateRoom() {
   }, [])
 
   function handleChange(e: any) {
-    const { name, value, type, checked } = e.target
-    setForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }))
+    const { name, value } = e.target
+    setForm(prev => ({ ...prev, [name]: value }))
   }
 
   async function handleSubmit() {
@@ -33,15 +32,11 @@ export default function CreateRoom() {
     }
     setLoading(true)
 
-    const roomCode = form.is_private
-      ? Math.random().toString(36).substring(2, 8).toUpperCase()
-      : null
-
     const { error } = await supabase.from('Rooms').insert({
       name: form.name,
       gender_preference: form.gender_preference,
-      is_private: form.is_private,
-      room_code: roomCode,
+      is_private: false,
+      room_code: null,
       created_by: user.id,
       status: 'Pending Approval',
     })
@@ -121,27 +116,6 @@ export default function CreateRoom() {
               ))}
             </div>
           </div>
-
-          {/* Private Room */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#F0FAF0', borderRadius: '12px', padding: '12px 16px', border: '1px solid #E8F5E9' }}>
-            <div>
-              <div style={{ fontWeight: '600', color: '#111827', fontSize: '14px' }}>Private Room 🔒</div>
-              <div style={{ fontSize: '12px', color: '#9CA3AF' }}>Like Among Us — only with the code!</div>
-            </div>
-            <input
-              type="checkbox"
-              name="is_private"
-              checked={form.is_private}
-              onChange={handleChange}
-              style={{ width: '20px', height: '20px', accentColor: '#4CAF50' }}
-            />
-          </div>
-
-          {form.is_private && (
-            <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '12px', padding: '12px 16px', fontSize: '12px', color: '#92400E', fontWeight: '500' }}>
-              🔑 A unique room code will be generated automatically when your room is approved!
-            </div>
-          )}
 
           <button
             onClick={handleSubmit}
