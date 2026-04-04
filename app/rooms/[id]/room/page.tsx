@@ -348,13 +348,34 @@ export default function RoomPage() {
           )}
         </div>
 
-        {/* VIDEO CALL INFO */}
-        {room?.is_sealed && (
-          <div className="bg-green-50 rounded-2xl border border-green-100 p-4 mb-4">
-            <div className="text-xs text-green-700 font-semibold mb-1">💡 About the ₹199 token</div>
-            <div className="text-xs text-gray-500 leading-relaxed">This is a refundable token to confirm your intent. It will be refunded within 24 hours if you decide not to proceed with the trip.</div>
-          </div>
-        )}
+      
+{room?.is_sealed && (
+  <div className="bg-green-50 rounded-2xl border border-green-100 p-4 mb-4">
+    <div className="text-xs text-green-700 font-semibold mb-2">💡 About the ₹199 token</div>
+    <div className="text-xs text-gray-500 leading-relaxed mb-3">This is a refundable token to confirm your intent before paying the full amount.</div>
+    <div className="border-t border-green-100 pt-3">
+      <div className="text-xs text-green-700 font-semibold mb-2">📋 Refund Policy</div>
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center gap-2 text-xs text-gray-500">
+          <span className="text-green-500 font-bold">✓</span>
+          <span>₹199 token — full refund within 24 hours of payment</span>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-gray-500">
+          <span className="text-green-500 font-bold">✓</span>
+          <span>₹6,999 trip — 90% back if cancelled 30+ days before</span>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-gray-500">
+          <span className="text-yellow-500 font-bold">~</span>
+          <span>₹6,999 trip — 50% back if cancelled 15–30 days before</span>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-gray-500">
+          <span className="text-red-400 font-bold">✕</span>
+          <span>No refund if cancelled less than 15 days before trip</span>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
 
         {/* ITINERARY */}
         <div className="bg-white rounded-2xl border border-green-100 p-5 mb-4">

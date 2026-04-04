@@ -143,9 +143,13 @@ export default function Login() {
                 <p>You confirm that you are at least 18 years of age. Minors are strictly not permitted on Cucumber trips.</p>
               </div>
               <div>
-                <p className="font-bold text-gray-900 mb-1">💸 5. Payments & Refunds</p>
-                <p>The ₹199 token payment is refundable within 24 hours of payment. The full trip payment of ₹6,999 is subject to the refund policy communicated at time of booking. Cucumber reserves the right to cancel a trip if minimum seats are not filled.</p>
-              </div>
+  <p className="font-bold text-gray-900 mb-1">💸 5. Payments & Refunds</p>
+  <p>
+    <strong>₹199 Token:</strong> Fully refunded if cancelled within 24 hours of payment. No refund after 24 hours.{'\n'}
+    <strong>₹6,999 Full Payment:</strong> 90% refund (₹6,299) if cancelled 30+ days before trip. 50% refund (₹3,499) if cancelled 15–30 days before. No refund if cancelled less than 15 days before trip.{'\n'}
+    Cucumber reserves the right to cancel a trip if minimum seats are not filled — full refund issued in that case.
+  </p>
+</div>
               <div>
                 <p className="font-bold text-gray-900 mb-1">🚫 6. Zero Tolerance Policy</p>
                 <p>Any form of harassment, discrimination, or misconduct toward fellow travelers or Cucumber staff will result in immediate removal from the trip and a permanent ban from the platform. No refund will be issued in such cases.</p>
