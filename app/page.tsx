@@ -212,8 +212,8 @@ export default function Home() {
             </div>
           </div>
           <div className="flex flex-col md:flex-row items-center justify-between border-t border-gray-800 pt-6 gap-3">
-            <span className="text-xs text-gray-600 text-center">© 2025 Cucumber Travel · Made with 🥒 in India</span>
-            <span className="text-xs text-gray-600">All rights reserved</span>
+            <span className="text-xs text-gray-600 text-center">© 2025 Cucumber Travel · Made with love in India</span>
+            <a href="/privacy-policy" className="text-xs text-gray-600 hover:text-green-400 transition-colors">Privacy Policy</a>
           </div>
         </div>
       </footer>
