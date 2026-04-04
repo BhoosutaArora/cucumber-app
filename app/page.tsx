@@ -107,10 +107,10 @@ export default function Home() {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-16">
             {[
-              { num: '4 Days', label: '3 Nights Shimla' },
-              { num: '₹6,999', label: 'All inclusive' },
-              { num: '8–10', label: 'People per room' },
-              { num: '🥒', label: 'Made in India' },
+            { num: 'Weekend', label: 'Fri–Sun Shimla' },
+{ num: '₹3,499', label: 'All inclusive' },
+{ num: '8', label: 'People per room' },
+{ num: seatsLeft > 0 ? `${seatsLeft} left` : 'Full!', label: 'Seats remaining' },
             ].map((s) => (
               <div key={s.label} className="text-center">
                 <div className="text-xl md:text-3xl font-extrabold text-green-700">{s.num}</div>
