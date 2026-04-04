@@ -34,13 +34,11 @@ export default function Dashboard() {
 
         if (profile?.username) {
           setUsername(profile.username)
-          // Check if age_group or gender is missing — show prompt
           if (!profile.age_group || !profile.gender) {
             setShowProfilePrompt(true)
             setPromptUsername(profile.username)
           }
         } else {
-          // No profile at all — show prompt to complete profile
           setShowProfilePrompt(true)
           setPromptUsername(user.user_metadata?.full_name?.split(' ')[0]?.toLowerCase() || '')
           setUsername(user.email?.split('@')[0] || 'Traveler')
@@ -111,8 +109,6 @@ export default function Dashboard() {
               <p className="text-green-200 text-xs mt-1">Just a few details so your travel buddies know you</p>
             </div>
             <div className="px-6 py-5">
-
-              {/* Username */}
               <div className="mb-4">
                 <label className="block text-xs font-bold text-gray-500 mb-1.5">Username</label>
                 <input
@@ -123,50 +119,31 @@ export default function Dashboard() {
                   className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
                 />
               </div>
-
-              {/* Age Group */}
               <div className="mb-4">
                 <label className="block text-xs font-bold text-gray-500 mb-1.5">Age Group</label>
                 <div className="grid grid-cols-3 gap-2">
                   {['18-24', '25-30', '31+'].map((a) => (
-                    <button
-                      key={a}
-                      type="button"
-                      onClick={() => setPromptAgeGroup(a)}
-                      className={'py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ' + (promptAgeGroup === a ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-600 border-gray-200 hover:border-green-300')}
-                    >
+                    <button key={a} type="button" onClick={() => setPromptAgeGroup(a)}
+                      className={'py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ' + (promptAgeGroup === a ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-600 border-gray-200 hover:border-green-300')}>
                       {a}
                     </button>
                   ))}
                 </div>
               </div>
-
-              {/* Gender */}
               <div className="mb-4">
                 <label className="block text-xs font-bold text-gray-500 mb-1.5">Gender</label>
                 <div className="grid grid-cols-3 gap-2">
                   {['Male', 'Female', 'Other'].map((g) => (
-                    <button
-                      key={g}
-                      type="button"
-                      onClick={() => setPromptGender(g)}
-                      className={'py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ' + (promptGender === g ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-600 border-gray-200 hover:border-green-300')}
-                    >
+                    <button key={g} type="button" onClick={() => setPromptGender(g)}
+                      className={'py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ' + (promptGender === g ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-600 border-gray-200 hover:border-green-300')}>
                       {g}
                     </button>
                   ))}
                 </div>
               </div>
-
-              {promptError && (
-                <div className="text-xs text-red-500 font-medium mb-3">{promptError}</div>
-              )}
-
-              <button
-                onClick={handleProfilePromptSave}
-                disabled={promptLoading}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:shadow-lg transition-all cursor-pointer disabled:opacity-50"
-              >
+              {promptError && <div className="text-xs text-red-500 font-medium mb-3">{promptError}</div>}
+              <button onClick={handleProfilePromptSave} disabled={promptLoading}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:shadow-lg transition-all cursor-pointer disabled:opacity-50">
                 {promptLoading ? 'Saving...' : 'Save & Continue 🥒'}
               </button>
             </div>
@@ -183,43 +160,27 @@ export default function Dashboard() {
               <h2 className="text-xl font-extrabold text-gray-900">Choose your username</h2>
               <p className="text-xs text-gray-400 mt-1">Letters, numbers and underscores only. 3-20 characters.</p>
             </div>
-            <input
-              type="text"
-              value={newUsernameInput}
+            <input type="text" value={newUsernameInput}
               onChange={(e) => { setNewUsernameInput(e.target.value); setUsernameError('') }}
               placeholder="e.g. hills_over_malls"
               className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all mb-3"
             />
-            {usernameError && (
-              <div className="text-xs text-red-500 font-medium mb-3">{usernameError}</div>
-            )}
+            {usernameError && <div className="text-xs text-red-500 font-medium mb-3">{usernameError}</div>}
             <button
               onClick={async () => {
                 const cleaned = newUsernameInput.toLowerCase().trim()
                 if (cleaned.length < 3) { setUsernameError('Too short! Minimum 3 characters.'); return }
                 if (cleaned.length > 20) { setUsernameError('Too long! Maximum 20 characters.'); return }
                 if (!/^[a-z0-9_]+$/.test(cleaned)) { setUsernameError('Only letters, numbers and underscores allowed!'); return }
-                const { error } = await supabase.from('profiles').upsert({
-                  id: user.id,
-                  username: cleaned,
-                  email: user.email,
-                })
-                if (error) {
-                  setUsernameError('This username is already taken! Try another one 🥒')
-                } else {
-                  setUsername(cleaned)
-                  setShowUsernameModal(false)
-                  setNewUsernameInput('')
-                }
+                const { error } = await supabase.from('profiles').upsert({ id: user.id, username: cleaned, email: user.email })
+                if (error) { setUsernameError('This username is already taken! Try another one 🥒') }
+                else { setUsername(cleaned); setShowUsernameModal(false); setNewUsernameInput('') }
               }}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:shadow-lg transition-all mb-2 cursor-pointer"
-            >
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:shadow-lg transition-all mb-2 cursor-pointer">
               Save Username 🥒
             </button>
-            <button
-              onClick={() => { setShowUsernameModal(false); setNewUsernameInput(''); setUsernameError('') }}
-              className="w-full py-2.5 rounded-xl border border-gray-200 text-gray-500 text-sm font-semibold hover:bg-gray-50 transition-all cursor-pointer"
-            >
+            <button onClick={() => { setShowUsernameModal(false); setNewUsernameInput(''); setUsernameError('') }}
+              className="w-full py-2.5 rounded-xl border border-gray-200 text-gray-500 text-sm font-semibold hover:bg-gray-50 transition-all cursor-pointer">
               Cancel
             </button>
           </div>
@@ -245,10 +206,8 @@ export default function Dashboard() {
               </div>
               <span className="text-xs md:text-sm font-semibold text-green-700 hidden sm:block">{userName}</span>
             </div>
-            <button
-              onClick={handleSignOut}
-              className="text-xs md:text-sm font-semibold text-gray-500 border border-gray-200 px-3 py-1.5 rounded-xl hover:bg-gray-50 transition-all cursor-pointer"
-            >
+            <button onClick={handleSignOut}
+              className="text-xs md:text-sm font-semibold text-gray-500 border border-gray-200 px-3 py-1.5 rounded-xl hover:bg-gray-50 transition-all cursor-pointer">
               Sign out
             </button>
           </div>
@@ -264,25 +223,13 @@ export default function Dashboard() {
                 <div>
                   <div className="text-green-200 text-xs md:text-sm font-semibold mb-1">Welcome back 👋</div>
                   <div className="flex items-center gap-2">
-                    <div className="text-white text-2xl md:text-3xl font-extrabold tracking-tight mb-1">
-                      Hey {userName}! 🥒
-                    </div>
-                    <button
-                      onClick={() => setShowUsernameModal(true)}
-                      className="text-white/70 hover:text-white text-lg transition-all cursor-pointer"
-                      title="Edit username"
-                    >
-                      ✏️
-                    </button>
+                    <div className="text-white text-2xl md:text-3xl font-extrabold tracking-tight mb-1">Hey {userName}! 🥒</div>
+                    <button onClick={() => setShowUsernameModal(true)} className="text-white/70 hover:text-white text-lg transition-all cursor-pointer" title="Edit username">✏️</button>
                   </div>
                   <div className="text-green-200 text-xs md:text-sm">Ready for your next adventure?</div>
                 </div>
                 <div className="flex items-center gap-3 md:gap-6">
-                  {[
-                    { num: '0', label: 'Trips' },
-                    { num: '0', label: 'Rooms' },
-                    { num: '0', label: 'Buddies' },
-                  ].map((stat) => (
+                  {[{ num: '0', label: 'Trips' }, { num: '0', label: 'Rooms' }, { num: '0', label: 'Buddies' }].map((stat) => (
                     <div key={stat.label} className="text-center bg-white/10 backdrop-blur rounded-xl md:rounded-2xl px-4 md:px-6 py-2 md:py-4 border border-white/20 flex-1 md:flex-none">
                       <div className="text-lg md:text-2xl font-extrabold text-white">{stat.num}</div>
                       <div className="text-xs text-green-200 mt-0.5">{stat.label}</div>
@@ -296,7 +243,7 @@ export default function Dashboard() {
           {/* ── MAIN CONTENT ── */}
           <div className="flex flex-col md:grid md:grid-cols-3 gap-5 md:gap-6">
 
-            {/* ── LEFT — trips + rooms ── */}
+            {/* ── LEFT ── */}
             <div className="md:col-span-2 flex flex-col gap-5 md:gap-6">
 
               {/* upcoming trips */}
@@ -305,56 +252,50 @@ export default function Dashboard() {
                   <div className="font-bold text-gray-900 text-base md:text-lg">My Upcoming Trips</div>
                   <a href="/rooms" className="text-xs font-bold text-green-600 hover:underline">Browse →</a>
                 </div>
-                <div className="p-4 md:p-6">
-                  <div className="text-center py-8 md:py-10">
-                    <div className="text-4xl md:text-5xl mb-3 md:mb-4">🏔️</div>
-                    <div className="font-bold text-gray-700 text-base md:text-lg mb-2">No trips booked yet</div>
-                    <div className="text-xs md:text-sm text-gray-400 mb-4 md:mb-5">Your next adventure is waiting!</div>
-                    <a href="/rooms" className="inline-block px-5 md:px-6 py-2.5 md:py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:scale-105 transition-all shadow-sm">
-                      Find a Room 🥒
-                    </a>
-                  </div>
+                <div className="p-4 md:p-6 text-center py-8 md:py-10">
+                  <div className="text-4xl md:text-5xl mb-3 md:mb-4">🏔️</div>
+                  <div className="font-bold text-gray-700 text-base md:text-lg mb-2">No trips booked yet</div>
+                  <div className="text-xs md:text-sm text-gray-400 mb-4 md:mb-5">Your next adventure is waiting!</div>
+                  <a href="/rooms" className="inline-block px-5 md:px-6 py-2.5 md:py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:scale-105 transition-all shadow-sm">
+                    Find a Room 🥒
+                  </a>
                 </div>
               </div>
 
-              {/* recommended rooms */}
+              {/* recommended room — REAL ONLY */}
               <div className="bg-white rounded-2xl border border-green-100 overflow-hidden">
                 <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-green-50">
-                  <div className="font-bold text-gray-900 text-base md:text-lg">Recommended For You</div>
+                  <div className="font-bold text-gray-900 text-base md:text-lg">Open Now</div>
                   <a href="/rooms" className="text-xs font-bold text-green-600 hover:underline">See all →</a>
                 </div>
-                <div className="p-3 md:p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-                  {[
-                   <div className="text-center py-8">
-  <div className="text-3xl mb-3">🏔️</div>
-  <div className="font-bold text-gray-700 mb-2">Weekend Shimla — Apr 10–12</div>
-  <div className="text-xs text-gray-400 mb-4">₹3,499 · 8 people · All inclusive</div>
-  <a href="/rooms/2" className="inline-block px-5 py-2.5 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:scale-105 transition-all">
-    View Room →
-  </a>
-</div>
-                  ].map((room) => (
-                    <div key={room.name} className="rounded-xl border border-green-100 overflow-hidden hover:-translate-y-1 hover:shadow-lg transition-all cursor-pointer">
-                      <div className={`h-16 md:h-20 bg-gradient-to-br ${room.color} flex items-end p-2 md:p-3`}>
-                        <span className="text-xs font-bold text-white bg-black/30 px-2 py-1 rounded-lg">📍 {room.dest}</span>
-                      </div>
-                      <div className="p-3">
-                        <div className="font-bold text-gray-900 text-sm mb-1">{room.name}</div>
-                        <div className="text-xs text-gray-400 mb-2">{room.dates}</div>
-                        <div className={`text-xs font-bold mb-2 ${room.urgent ? 'text-orange-500' : 'text-green-600'}`}>
-                          {room.urgent ? '🔥' : '🌱'} {room.seats}
-                        </div>
-                        <a href="/rooms" className="block w-full py-1.5 rounded-lg bg-gradient-to-r from-green-400 to-green-500 text-white text-xs font-bold text-center hover:scale-105 transition-transform">
-                          Join Room
-                        </a>
-                      </div>
+                <div className="p-5">
+                  <div className="rounded-xl border border-green-100 overflow-hidden hover:-translate-y-1 hover:shadow-lg transition-all">
+                    <div className="h-32 relative overflow-hidden">
+                      <img
+                        src="https://qutczfwmdqlpeslqcwnt.supabase.co/storage/v1/object/public/image/yash-kiran-qxp9X5t9hQ4-unsplash.jpg"
+                        alt="Shimla"
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                      <span className="absolute bottom-2 left-2 text-xs font-bold text-white bg-black/30 px-2 py-1 rounded-lg">📍 Shimla, HP</span>
                     </div>
-                  ))}
+                    <div className="p-4">
+                      <div className="font-bold text-gray-900 text-base mb-1">Weekend Shimla 🏔️</div>
+                      <div className="text-xs text-gray-400 mb-3">Apr 10–12, 2026 · 8 people max</div>
+                      <div className="flex items-center justify-between">
+                        <div className="text-lg font-extrabold text-green-700">₹3,499</div>
+                        <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full">🌱 Open</span>
+                      </div>
+                      <a href="/rooms/2" className="block w-full mt-3 py-2.5 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm text-center hover:scale-105 transition-transform cursor-pointer">
+                        View Room & Join →
+                      </a>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* ── RIGHT — profile + actions ── */}
+            {/* ── RIGHT ── */}
             <div className="flex flex-col gap-5 md:gap-6">
 
               {/* profile card */}
@@ -371,19 +312,14 @@ export default function Dashboard() {
                   <div className="text-xs text-green-600 font-semibold mt-1">🌱 New Traveler</div>
                   <div className="text-xs text-gray-400 mt-1 truncate px-2">{userEmail}</div>
                   <div className="grid grid-cols-3 gap-2 mt-3 md:mt-4">
-                    {[
-                      { num: '0', label: 'Trips' },
-                      { num: '0', label: 'Reviews' },
-                      { num: '—', label: 'Rating' },
-                    ].map((s) => (
+                    {[{ num: '0', label: 'Trips' }, { num: '0', label: 'Reviews' }, { num: '—', label: 'Rating' }].map((s) => (
                       <div key={s.label} className="bg-green-50 rounded-xl py-2 border border-green-100">
                         <div className="font-bold text-green-700 text-base md:text-lg">{s.num}</div>
                         <div className="text-xs text-gray-400">{s.label}</div>
                       </div>
                     ))}
                   </div>
-                  <button
-                    onClick={() => setShowUsernameModal(true)}
+                  <button onClick={() => setShowUsernameModal(true)}
                     className="w-full mt-3 md:mt-4 py-2 rounded-xl border border-green-200 text-green-700 text-sm font-semibold hover:bg-green-50 transition-all cursor-pointer">
                     Edit Profile ✏️
                   </button>
@@ -396,8 +332,8 @@ export default function Dashboard() {
                 {[
                   { icon: '🏠', label: 'Browse Rooms', href: '/rooms' },
                   { icon: '🪪', label: 'Verify My ID', href: '/verify-id' },
-                  { icon: '🔔', label: 'Notifications', href: '#' },
-                  { icon: '⚙️', label: 'Settings', href: '#' },
+                  { icon: '🎥', label: 'Video Call', href: '/video-call' },
+                  { icon: '💬', label: 'Group Chat', href: '/chat' },
                 ].map((action) => (
                   <a key={action.label} href={action.href}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-green-50 transition-all cursor-pointer mb-1">
@@ -410,7 +346,7 @@ export default function Dashboard() {
 
               {/* account info */}
               <div className="bg-green-50 rounded-2xl border border-green-100 p-4">
-                <div className="font-bold text-green-700 text-xs md:text-sm mb-2">✅ Account Verified</div>
+                <div className="font-bold text-green-700 text-xs md:text-sm mb-2">✅ Account Active</div>
                 <div className="text-xs text-gray-500 leading-relaxed">
                   Complete your profile to unlock all features and join travel rooms.
                 </div>
