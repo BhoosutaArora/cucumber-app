@@ -10,6 +10,7 @@ export default function Login() {
   const [username, setUsername] = useState('')
   const [ageGroup, setAgeGroup] = useState('')
   const [gender, setGender] = useState('')
+  const [phone, setPhone] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [messageType, setMessageType] = useState('')
@@ -46,6 +47,8 @@ export default function Login() {
     if (!username) { setMessage('Please choose a username 🥒'); setMessageType('error'); return }
     if (!ageGroup) { setMessage('Please select your age group 🥒'); setMessageType('error'); return }
     if (!gender) { setMessage('Please select your gender 🥒'); setMessageType('error'); return }
+    if (!phone) { setMessage('Please enter your phone number 🥒'); setMessageType('error'); return }
+    if (phone.length < 10) { setMessage('Please enter a valid phone number 🥒'); setMessageType('error'); return }
     setShowTerms(true)
     setTermsChecked(false)
     setHasScrolled(false)
@@ -71,6 +74,7 @@ export default function Login() {
           email: email,
           age_group: ageGroup,
           gender: gender,
+          phone: phone.trim(),
         })
       }
       setMessage('We sent a confirmation email to ' + email + ' — open it on any device and click the link. This page will automatically take you to dashboard! 🥒')
@@ -128,7 +132,7 @@ export default function Login() {
               </div>
               <div>
                 <p className="font-bold text-gray-900 mb-1">✅ 2. Provide Accurate Details</p>
-                <p>You agree that all information you provide — including your name, age group, gender, and contact details — is true and accurate. Providing false information is a violation of these terms and may result in immediate removal from the platform and the trip without refund.</p>
+                <p>You agree that all information you provide — including your name, age group, gender, phone number and contact details — is true and accurate. Providing false information is a violation of these terms and may result in immediate removal from the platform and the trip without refund.</p>
               </div>
               <div>
                 <p className="font-bold text-gray-900 mb-1">🧍 3. You Are Responsible for Your Conduct</p>
@@ -182,7 +186,7 @@ export default function Login() {
           <a href="/" className="text-3xl md:text-4xl font-extrabold text-green-300 tracking-tight relative z-10 block">
             cucumber<span className="text-white opacity-50">.</span>
           </a>
-          <p className="text-green-200 text-sm mt-2 relative z-10">{isSignUp ? 'Join 12,000+ travelers' : 'Welcome back traveler'}</p>
+          <p className="text-green-200 text-sm mt-2 relative z-10">{isSignUp ? 'Join the first Shimla trip!' : 'Welcome back traveler'}</p>
         </div>
 
         <div className="px-6 md:px-8 py-6 md:py-8">
@@ -212,38 +216,43 @@ export default function Login() {
                 <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="e.g. hills_over_malls" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all" />
               </div>
 
-              {/* ── AGE GROUP ── */}
               <div className="mb-3">
                 <label className="block text-xs font-bold text-gray-500 mb-1.5">Age Group</label>
                 <div className="grid grid-cols-3 gap-2">
                   {['18-24', '25-30', '31+'].map((a) => (
-                    <button
-                      key={a}
-                      type="button"
-                      onClick={() => setAgeGroup(a)}
-                      className={'py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ' + (ageGroup === a ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-600 border-gray-200 hover:border-green-300')}
-                    >
+                    <button key={a} type="button" onClick={() => setAgeGroup(a)} className={'py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ' + (ageGroup === a ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-600 border-gray-200 hover:border-green-300')}>
                       {a}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* ── GENDER ── */}
               <div className="mb-3">
                 <label className="block text-xs font-bold text-gray-500 mb-1.5">Gender</label>
                 <div className="grid grid-cols-3 gap-2">
                   {['Male', 'Female', 'Other'].map((g) => (
-                    <button
-                      key={g}
-                      type="button"
-                      onClick={() => setGender(g)}
-                      className={'py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ' + (gender === g ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-600 border-gray-200 hover:border-green-300')}
-                    >
+                    <button key={g} type="button" onClick={() => setGender(g)} className={'py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ' + (gender === g ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-600 border-gray-200 hover:border-green-300')}>
                       {g}
                     </button>
                   ))}
                 </div>
+              </div>
+
+              <div className="mb-3">
+                <label className="block text-xs font-bold text-gray-500 mb-1.5">Phone Number</label>
+                <div className="flex gap-2">
+                  <div className="flex items-center px-3 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-500 font-semibold">
+                    🇮🇳 +91
+                  </div>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    placeholder="9876543210"
+                    className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
+                  />
+                </div>
+                <p className="text-xs text-gray-400 mt-1">We will send trip updates on WhatsApp</p>
               </div>
             </>
           )}
