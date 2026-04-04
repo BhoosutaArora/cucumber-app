@@ -8,7 +8,8 @@ export default function VideoCall() {
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [callStarted, setCallStarted] = useState(false)
-  const [roomName, setRoomName] = useState('Peaceful Escape')
+  const [jitsiReady, setJitsiReady] = useState(false)
+  const roomName = 'Peaceful Escape'
   const jitsiContainerRef = useRef<HTMLDivElement>(null)
   const jitsiApiRef = useRef<any>(null)
 
@@ -17,82 +18,90 @@ export default function VideoCall() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/login'; return }
       setUser(user)
-
       const { data: profileData } = await supabase
         .from('profiles')
         .select('username')
         .eq('id', user.id)
         .single()
       setProfile(profileData)
-
       setLoading(false)
     }
     init()
 
-    // Load Jitsi script
+    // Load Jitsi script and wait for it to be ready
+    if (document.getElementById('jitsi-script')) {
+      setJitsiReady(true)
+      return
+    }
     const script = document.createElement('script')
+    script.id = 'jitsi-script'
     script.src = 'https://meet.jit.si/external_api.js'
     script.async = true
+    script.onload = () => setJitsiReady(true)
     document.head.appendChild(script)
 
     return () => {
       if (jitsiApiRef.current) {
         jitsiApiRef.current.dispose()
       }
-      document.head.removeChild(script)
     }
   }, [])
 
   function startJitsiCall() {
+    if (!jitsiReady) {
+      alert('Still loading, please wait a moment and try again!')
+      return
+    }
     if (!jitsiContainerRef.current) return
 
-    const meetingName = 'Cucumber-' + roomName.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '')
+    const meetingName = 'Cucumber-Peaceful-Escape-Shimla-2026'
     const displayName = profile?.username || user?.email?.split('@')[0] || 'Traveler'
 
-    const api = new (window as any).JitsiMeetExternalAPI('meet.jit.si', {
-      roomName: meetingName,
-      parentNode: jitsiContainerRef.current,
-      width: '100%',
-      height: '100%',
-      userInfo: {
-        displayName: displayName,
-      },
-      configOverwrite: {
-        startWithAudioMuted: false,
-        startWithVideoMuted: false,
-        disableDeepLinking: true,
-        prejoinPageEnabled: false,
-        disableInviteFunctions: true,
-        enableWelcomePage: false,
-      },
-      interfaceConfigOverwrite: {
-        SHOW_JITSI_WATERMARK: false,
-        SHOW_WATERMARK_FOR_GUESTS: false,
-        SHOW_BRAND_WATERMARK: false,
-        BRAND_WATERMARK_LINK: '',
-        SHOW_POWERED_BY: false,
-        DISPLAY_WELCOME_PAGE_CONTENT: false,
-        TOOLBAR_BUTTONS: [
-          'microphone', 'camera', 'closedcaptions', 'desktop',
-          'fullscreen', 'fodeviceselection', 'hangup',
-          'chat', 'raisehand', 'tileview', 'select-background',
-        ],
-        DEFAULT_BACKGROUND: '#0a0a0a',
-        MOBILE_APP_PROMO: false,
-      },
-    })
+    try {
+      const api = new (window as any).JitsiMeetExternalAPI('meet.jit.si', {
+        roomName: meetingName,
+        parentNode: jitsiContainerRef.current,
+        width: '100%',
+        height: '100%',
+        userInfo: {
+          displayName: displayName,
+        },
+        configOverwrite: {
+          startWithAudioMuted: false,
+          startWithVideoMuted: false,
+          disableDeepLinking: true,
+          prejoinPageEnabled: false,
+          disableInviteFunctions: true,
+        },
+        interfaceConfigOverwrite: {
+          SHOW_JITSI_WATERMARK: false,
+          SHOW_WATERMARK_FOR_GUESTS: false,
+          SHOW_BRAND_WATERMARK: false,
+          SHOW_POWERED_BY: false,
+          MOBILE_APP_PROMO: false,
+          TOOLBAR_BUTTONS: [
+            'microphone', 'camera', 'fullscreen',
+            'fodeviceselection', 'hangup', 'chat',
+            'raisehand', 'tileview',
+          ],
+        },
+      })
 
-    jitsiApiRef.current = api
+      jitsiApiRef.current = api
 
-    api.addEventListener('videoConferenceLeft', () => {
-      setCallStarted(false)
-      if (jitsiApiRef.current) {
-        jitsiApiRef.current.dispose()
-        jitsiApiRef.current = null
-      }
-    })
+      api.addEventListener('videoConferenceLeft', () => {
+        setCallStarted(false)
+        if (jitsiApiRef.current) {
+          jitsiApiRef.current.dispose()
+          jitsiApiRef.current = null
+        }
+      })
 
-    setCallStarted(true)
+      setCallStarted(true)
+    } catch (err) {
+      console.error('Jitsi error:', err)
+      alert('Could not start video call. Please refresh the page and try again!')
+    }
   }
 
   if (loading) {
@@ -134,7 +143,6 @@ export default function VideoCall() {
       </nav>
 
       {!callStarted ? (
-        /* ── WAITING ROOM ── */
         <div className="flex-1 flex items-center justify-center px-4 py-8">
           <div className="w-full max-w-lg">
 
@@ -144,8 +152,7 @@ export default function VideoCall() {
                 Pre-Trip Video Call
               </h1>
               <p className="text-sm text-gray-400 leading-relaxed">
-                Meet your travel buddies before the adventure begins!<br />
-                Your camera and mic will turn on when you join.
+                Meet your travel buddies before the adventure begins!
               </p>
             </div>
 
@@ -153,9 +160,7 @@ export default function VideoCall() {
             <div className="bg-gray-900 rounded-2xl border border-gray-800 p-5 mb-5">
               <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Your Room</div>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center text-xl">
-                  🏔️
-                </div>
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center text-xl">🏔️</div>
                 <div>
                   <div className="font-bold text-white text-sm">{roomName}</div>
                   <div className="text-xs text-green-400">📍 Shimla, HP · Aug 2–5, 2026</div>
@@ -194,12 +199,11 @@ export default function VideoCall() {
               </div>
             </div>
 
-            {/* Join button */}
             <button
               onClick={startJitsiCall}
               className="w-full py-4 rounded-2xl bg-gradient-to-r from-green-500 to-green-600 text-white font-extrabold text-base hover:scale-105 transition-all shadow-xl shadow-green-900 cursor-pointer"
             >
-              Join Video Call 🎥
+              {jitsiReady ? 'Join Video Call 🎥' : 'Loading... please wait'}
             </button>
 
             <a href="/chat" className="block text-center text-xs text-gray-500 mt-4 hover:text-gray-400 transition-colors">
@@ -209,7 +213,6 @@ export default function VideoCall() {
           </div>
         </div>
       ) : (
-        /* ── JITSI CALL ── */
         <div className="flex-1 flex flex-col">
           <div
             ref={jitsiContainerRef}
