@@ -131,8 +131,8 @@ export default function Home() {
 
         {/* Real room card */}
         <div className="max-w-sm mx-auto bg-white rounded-2xl overflow-hidden border border-green-100 hover:-translate-y-1 hover:shadow-xl transition-all duration-300">
-          <div className="h-48 bg-gradient-to-br from-green-900 to-green-700 relative flex items-end p-4">
-            <div className="absolute inset-0 opacity-20" style={{backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px'}} />
+          <div className="h-48 relative flex items-end p-4" style={{backgroundImage: 'url(https://qutczfwmdqlpeslqcwnt.supabase.co/storage/v1/object/public/image/yash-kiran-qxp9X5t9hQ4-unsplash.jpg)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             <span className="text-xs font-bold text-white bg-black/30 px-3 py-1 rounded-lg relative z-10">
               📍 {room?.destination || 'Shimla, HP'}
             </span>
