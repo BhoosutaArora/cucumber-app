@@ -70,7 +70,7 @@ export default function Login() {
             gender: gender,
           })
         }
-        setMessage('We sent a confirmation email to ' + email + ' — check your inbox and spam folder and click the link to activate your account 🥒')
+       setMessage('We sent a confirmation email to ' + email + ' — open that email on THIS same device and browser, then come back here and sign in! 🥒')
         setMessageType('success')
       }
     } else {
