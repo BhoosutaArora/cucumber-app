@@ -4,6 +4,12 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 
+declare global {
+  interface Window {
+    Razorpay: any
+  }
+}
+
 export default function RoomPage() {
   const params = useParams()
   const id = params?.id as string
@@ -16,8 +22,15 @@ export default function RoomPage() {
   const [sealing, setSealing] = useState(false)
   const [kickVotes, setKickVotes] = useState<any[]>([])
   const [kickingId, setKickingId] = useState<string | null>(null)
+  const [paymentLoading, setPaymentLoading] = useState(false)
 
   useEffect(() => {
+    // Load Razorpay script
+    const script = document.createElement('script')
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+    script.async = true
+    document.body.appendChild(script)
+
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/login'; return }
@@ -46,6 +59,10 @@ export default function RoomPage() {
       setLoading(false)
     }
     if (id) load()
+
+    return () => {
+      document.body.removeChild(script)
+    }
   }, [id])
 
   async function loadMembers() {
@@ -73,10 +90,7 @@ export default function RoomPage() {
   }
 
   async function loadKickVotes() {
-    const { data } = await supabase
-      .from('kick_votes')
-      .select('*')
-      .eq('room_id', id)
+    const { data } = await supabase.from('kick_votes').select('*').eq('room_id', id)
     setKickVotes(data || [])
   }
 
@@ -96,43 +110,23 @@ export default function RoomPage() {
 
   async function voteToKick(targetId: string, targetUsername: string) {
     if (targetId === user.id) return
-
-    // Check if already voted
     const alreadyVoted = kickVotes.some(v => v.voter_id === user.id && v.target_id === targetId)
-    if (alreadyVoted) {
-      alert('You already voted to kick ' + targetUsername + '!')
-      return
-    }
-
+    if (alreadyVoted) { alert('You already voted to kick ' + targetUsername + '!'); return }
     if (!confirm('Vote to kick ' + targetUsername + '? If majority agrees they will be removed.')) return
 
     setKickingId(targetId)
+    await supabase.from('kick_votes').insert({ room_id: id, voter_id: user.id, target_id: targetId })
 
-    // Save vote
-    await supabase.from('kick_votes').insert({
-      room_id: id,
-      voter_id: user.id,
-      target_id: targetId,
-    })
-
-    // Reload votes
-    const { data: updatedVotes } = await supabase
-      .from('kick_votes')
-      .select('*')
-      .eq('room_id', id)
-
+    const { data: updatedVotes } = await supabase.from('kick_votes').select('*').eq('room_id', id)
     const allVotes = updatedVotes || []
     setKickVotes(allVotes)
 
-    // Count votes against this target
     const votesAgainstTarget = allVotes.filter(v => v.target_id === targetId).length
     const totalMembers = members.length
     const majorityReached = votesAgainstTarget > totalMembers / 2
 
     if (majorityReached) {
-      // Kick the person!
       await supabase.from('room_members').delete().eq('room_id', id).eq('user_id', targetId)
-      // Clean up their kick votes
       await supabase.from('kick_votes').delete().eq('room_id', id).eq('target_id', targetId)
       alert(targetUsername + ' has been removed from the room by majority vote.')
       await loadMembers()
@@ -140,8 +134,63 @@ export default function RoomPage() {
     } else {
       alert('Vote recorded! ' + votesAgainstTarget + '/' + totalMembers + ' votes to kick ' + targetUsername + '. Need majority to remove.')
     }
-
     setKickingId(null)
+  }
+
+  async function handleVideoCall() {
+    setPaymentLoading(true)
+    try {
+      // Create order on server
+      const res = await fetch('/api/razorpay-order', { method: 'POST' })
+      const { orderId, error } = await res.json()
+
+      if (error || !orderId) {
+        alert('Payment setup failed. Please try again!')
+        setPaymentLoading(false)
+        return
+      }
+
+      // Get user profile for prefill
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username, email')
+        .eq('id', user.id)
+        .single()
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: 19900,
+        currency: 'INR',
+        name: 'Cucumber Travel',
+        description: 'Video Call Token — Refundable within 24 hours',
+        image: '/favicon.ico',
+        order_id: orderId,
+        prefill: {
+          name: profile?.username || '',
+          email: user?.email || '',
+        },
+        theme: { color: '#4CAF50' },
+        handler: async function (response: any) {
+          // Payment successful!
+          alert('Payment successful! 🥒 Joining video call...')
+          setPaymentLoading(false)
+          window.location.href = '/video-call'
+        },
+        modal: {
+          ondismiss: function () {
+            setPaymentLoading(false)
+          }
+        }
+      }
+
+      const rzp = new window.Razorpay(options)
+      rzp.open()
+
+    } catch (err) {
+      console.error(err)
+      alert('Something went wrong. Please try again!')
+      setPaymentLoading(false)
+    }
   }
 
   if (loading) {
@@ -244,54 +293,30 @@ export default function RoomPage() {
 
                 return (
                   <div key={member.id} className="flex items-center gap-3 hover:bg-green-50 rounded-xl p-2 transition-all">
-                    {/* Avatar — clickable to profile */}
-                    <div
-                      onClick={() => { window.location.href = '/profile/' + member.username }}
-                      className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold flex-shrink-0 cursor-pointer"
-                    >
+                    <div onClick={() => { window.location.href = '/profile/' + member.username }} className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold flex-shrink-0 cursor-pointer">
                       {member.username[0].toUpperCase()}
                     </div>
-
-                    {/* Name + details */}
-                    <div
-                      onClick={() => { window.location.href = '/profile/' + member.username }}
-                      className="flex-1 cursor-pointer"
-                    >
+                    <div onClick={() => { window.location.href = '/profile/' + member.username }} className="flex-1 cursor-pointer">
                       <div className="font-semibold text-gray-900 text-sm">{member.username}</div>
                       {(member.age_group || member.gender) && (
-                        <div className="text-xs text-gray-400 mt-0.5">
-                          {[member.age_group, member.gender].filter(Boolean).join(' · ')}
-                        </div>
+                        <div className="text-xs text-gray-400 mt-0.5">{[member.age_group, member.gender].filter(Boolean).join(' · ')}</div>
                       )}
-                      {/* Show kick vote count if any */}
                       {votesAgainstMember > 0 && !isMe && (
-                        <div className="text-xs text-red-400 mt-0.5 font-medium">
-                          ⚠️ {votesAgainstMember}/{totalCount} kick votes
-                        </div>
+                        <div className="text-xs text-red-400 mt-0.5 font-medium">⚠️ {votesAgainstMember}/{totalCount} kick votes</div>
                       )}
                     </div>
-
-                    {/* Badges + kick button */}
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {member.is_ready ? (
                         <span className="text-xs bg-green-100 text-green-700 font-bold px-2 py-1 rounded-full">Ready</span>
                       ) : (
                         <span className="text-xs bg-gray-100 text-gray-500 font-bold px-2 py-1 rounded-full">Thinking...</span>
                       )}
-                      {isMe && (
-                        <span className="text-xs bg-blue-100 text-blue-700 font-bold px-2 py-1 rounded-full">You</span>
-                      )}
-                      {/* Kick button — only shown for other members */}
+                      {isMe && <span className="text-xs bg-blue-100 text-blue-700 font-bold px-2 py-1 rounded-full">You</span>}
                       {!isMe && (
                         <button
                           onClick={() => voteToKick(member.user_id, member.username)}
                           disabled={iHaveVoted || kickingId === member.user_id}
-                          className={`text-xs font-bold px-2 py-1 rounded-full transition-all cursor-pointer ${
-                            iHaveVoted
-                              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                              : 'bg-red-50 text-red-500 hover:bg-red-100 border border-red-200'
-                          }`}
-                          title={iHaveVoted ? 'Already voted' : 'Vote to kick'}
+                          className={`text-xs font-bold px-2 py-1 rounded-full transition-all cursor-pointer ${iHaveVoted ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-red-50 text-red-500 hover:bg-red-100 border border-red-200'}`}
                         >
                           {kickingId === member.user_id ? '...' : iHaveVoted ? '✓ Voted' : '👢 Kick'}
                         </button>
@@ -310,8 +335,11 @@ export default function RoomPage() {
             Group Chat
           </div>
           {room?.is_sealed ? (
-            <div onClick={() => { window.location.href = '/video-call' }} className="py-4 rounded-2xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm text-center hover:shadow-lg transition-all cursor-pointer">
-              Video Call Unlocked!
+            <div
+              onClick={!paymentLoading ? handleVideoCall : undefined}
+              className={`py-4 rounded-2xl font-bold text-sm text-center transition-all cursor-pointer ${paymentLoading ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-green-400 to-green-500 text-white hover:shadow-lg'}`}
+            >
+              {paymentLoading ? 'Opening payment...' : '🎥 Video Call — ₹199'}
             </div>
           ) : (
             <div className="py-4 rounded-2xl bg-gray-100 text-gray-400 font-bold text-sm text-center cursor-not-allowed">
@@ -319,6 +347,14 @@ export default function RoomPage() {
             </div>
           )}
         </div>
+
+        {/* VIDEO CALL INFO */}
+        {room?.is_sealed && (
+          <div className="bg-green-50 rounded-2xl border border-green-100 p-4 mb-4">
+            <div className="text-xs text-green-700 font-semibold mb-1">💡 About the ₹199 token</div>
+            <div className="text-xs text-gray-500 leading-relaxed">This is a refundable token to confirm your intent. It will be refunded within 24 hours if you decide not to proceed with the trip.</div>
+          </div>
+        )}
 
         {/* ITINERARY */}
         <div className="bg-white rounded-2xl border border-green-100 p-5 mb-4">
