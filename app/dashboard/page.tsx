@@ -26,13 +26,8 @@ export default function Dashboard() {
         if (profile?.username) {
           setUsername(profile.username)
         } else {
-          const newUsername = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Traveler'
-          await supabase.from('profiles').upsert({
-            id: user.id,
-            username: newUsername,
-            email: user.email,
-          })
-          setUsername(newUsername)
+          // No profile found — just show email name as display, don't save anything
+          setUsername(user.email?.split('@')[0] || 'Traveler')
         }
         setLoading(false)
       }
@@ -73,7 +68,7 @@ export default function Dashboard() {
               type="text"
               value={newUsernameInput}
               onChange={(e) => { setNewUsernameInput(e.target.value); setUsernameError('') }}
-              placeholder="e.g. Disappearing Penguine "
+              placeholder="e.g. hills_over_malls"
               className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all mb-3"
             />
             {usernameError && (
@@ -98,13 +93,13 @@ export default function Dashboard() {
                   setNewUsernameInput('')
                 }
               }}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:shadow-lg transition-all mb-2"
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:shadow-lg transition-all mb-2 cursor-pointer"
             >
               Save Username 🥒
             </button>
             <button
               onClick={() => { setShowUsernameModal(false); setNewUsernameInput(''); setUsernameError('') }}
-              className="w-full py-2.5 rounded-xl border border-gray-200 text-gray-500 text-sm font-semibold hover:bg-gray-50 transition-all"
+              className="w-full py-2.5 rounded-xl border border-gray-200 text-gray-500 text-sm font-semibold hover:bg-gray-50 transition-all cursor-pointer"
             >
               Cancel
             </button>
@@ -133,7 +128,7 @@ export default function Dashboard() {
             </div>
             <button
               onClick={handleSignOut}
-              className="text-xs md:text-sm font-semibold text-gray-500 border border-gray-200 px-3 py-1.5 rounded-xl hover:bg-gray-50 transition-all"
+              className="text-xs md:text-sm font-semibold text-gray-500 border border-gray-200 px-3 py-1.5 rounded-xl hover:bg-gray-50 transition-all cursor-pointer"
             >
               Sign out
             </button>
@@ -155,7 +150,7 @@ export default function Dashboard() {
                     </div>
                     <button
                       onClick={() => setShowUsernameModal(true)}
-                      className="text-white/70 hover:text-white text-lg transition-all"
+                      className="text-white/70 hover:text-white text-lg transition-all cursor-pointer"
                       title="Edit username"
                     >
                       ✏️
@@ -264,7 +259,7 @@ export default function Dashboard() {
                   </div>
                   <button
                     onClick={() => setShowUsernameModal(true)}
-                    className="w-full mt-3 md:mt-4 py-2 rounded-xl border border-green-200 text-green-700 text-sm font-semibold hover:bg-green-50 transition-all">
+                    className="w-full mt-3 md:mt-4 py-2 rounded-xl border border-green-200 text-green-700 text-sm font-semibold hover:bg-green-50 transition-all cursor-pointer">
                     Edit Profile ✏️
                   </button>
                 </div>
