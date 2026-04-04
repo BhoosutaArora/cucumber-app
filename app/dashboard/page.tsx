@@ -325,8 +325,14 @@ export default function Dashboard() {
                 </div>
                 <div className="p-3 md:p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                   {[
-                    { name: 'Adventure Squad 🏔️', dest: 'Spiti Valley', dates: 'Aug 14–17', seats: '1 seat left', color: 'from-indigo-900 to-purple-900', urgent: true },
-                    { name: 'Peaceful Escape 🌿', dest: 'Shimla', dates: 'Aug 2–5', seats: '4 seats open', color: 'from-green-900 to-green-700', urgent: false },
+                   <div className="text-center py-8">
+  <div className="text-3xl mb-3">🏔️</div>
+  <div className="font-bold text-gray-700 mb-2">Weekend Shimla — Apr 10–12</div>
+  <div className="text-xs text-gray-400 mb-4">₹3,499 · 8 people · All inclusive</div>
+  <a href="/rooms/2" className="inline-block px-5 py-2.5 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:scale-105 transition-all">
+    View Room →
+  </a>
+</div>
                   ].map((room) => (
                     <div key={room.name} className="rounded-xl border border-green-100 overflow-hidden hover:-translate-y-1 hover:shadow-lg transition-all cursor-pointer">
                       <div className={`h-16 md:h-20 bg-gradient-to-br ${room.color} flex items-end p-2 md:p-3`}>
