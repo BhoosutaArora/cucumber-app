@@ -30,7 +30,6 @@ export default function RoomPage() {
 
       if (!membership) { window.location.href = '/rooms/' + id; return }
       setMyMembership(membership)
-
       if (!membership.is_ready) setShowPopup(true)
 
       const { data: roomData } = await supabase
@@ -56,31 +55,29 @@ export default function RoomPage() {
       (membersRaw || []).map(async (member: any) => {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('username')
+          .select('username, age_group, gender')
           .eq('id', member.user_id)
           .single()
-        return { ...member, username: profile?.username || 'Traveler' }
+        return {
+          ...member,
+          username: profile?.username || 'Traveler',
+          age_group: profile?.age_group || null,
+          gender: profile?.gender || null,
+        }
       })
     )
     setMembers(membersWithProfiles)
   }
 
   async function markReady() {
-    await supabase
-      .from('room_members')
-      .update({ is_ready: true })
-      .eq('room_id', id)
-      .eq('user_id', user.id)
+    await supabase.from('room_members').update({ is_ready: true }).eq('room_id', id).eq('user_id', user.id)
     setMyMembership({ ...myMembership, is_ready: true })
     await loadMembers()
   }
 
   async function sealRoom() {
     setSealing(true)
-    await supabase
-      .from('Rooms')
-      .update({ is_sealed: true })
-      .eq('id', id)
+    await supabase.from('Rooms').update({ is_sealed: true }).eq('id', id)
     setRoom({ ...room, is_sealed: true })
     setSealing(false)
     alert('Room sealed! Video call is now unlocked!')
@@ -113,16 +110,10 @@ export default function RoomPage() {
             <p className="text-sm text-gray-500 text-center mb-4 leading-relaxed">
               This room can be sealed once minimum half the members click Ready. Once sealed, video call unlocks and you can meet your travel buddies before paying!
             </p>
-            <button
-              onClick={() => { setShowPopup(false); markReady() }}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold cursor-pointer hover:shadow-lg transition-all"
-            >
+            <button onClick={() => { setShowPopup(false); markReady() }} className="w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold cursor-pointer hover:shadow-lg transition-all">
               Got it — I am Ready!
             </button>
-            <button
-              onClick={() => setShowPopup(false)}
-              className="w-full py-2 mt-2 text-sm text-gray-400 cursor-pointer hover:text-gray-600 transition-all"
-            >
+            <button onClick={() => setShowPopup(false)} className="w-full py-2 mt-2 text-sm text-gray-400 cursor-pointer hover:text-gray-600 transition-all">
               I will decide later
             </button>
           </div>
@@ -130,12 +121,8 @@ export default function RoomPage() {
       )}
 
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 md:px-12 h-14 bg-white border-b border-green-100 shadow-sm">
-        <a href="/" className="text-xl font-extrabold text-green-700 cursor-pointer">
-          cucumber<span className="text-green-400">.</span>
-        </a>
-        <a href="/rooms" className="text-sm font-semibold text-gray-500 hover:text-green-700 cursor-pointer">
-          Back to Rooms
-        </a>
+        <a href="/" className="text-xl font-extrabold text-green-700 cursor-pointer">cucumber<span className="text-green-400">.</span></a>
+        <a href="/rooms" className="text-sm font-semibold text-gray-500 hover:text-green-700 cursor-pointer">Back to Rooms</a>
       </nav>
 
       <div className="pt-20 pb-16 px-4 md:px-16 max-w-3xl mx-auto">
@@ -162,36 +149,22 @@ export default function RoomPage() {
               <span className="text-sm font-bold text-green-600">{readyCount}/{totalCount} Ready</span>
             </div>
             <div className="h-2 bg-green-100 rounded-full overflow-hidden mb-3">
-              <div
-                className="h-full bg-gradient-to-r from-green-400 to-green-500 rounded-full transition-all"
-                style={{ width: totalCount > 0 ? (readyCount / totalCount * 100) + '%' : '0%' }}
-              />
+              <div className="h-full bg-gradient-to-r from-green-400 to-green-500 rounded-full transition-all" style={{ width: totalCount > 0 ? (readyCount / totalCount * 100) + '%' : '0%' }} />
             </div>
             {!myMembership?.is_ready ? (
-              <button
-                onClick={markReady}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm cursor-pointer hover:shadow-lg transition-all"
-              >
+              <button onClick={markReady} className="w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm cursor-pointer hover:shadow-lg transition-all">
                 I am Ready to Travel!
               </button>
             ) : (
-              <div className="text-center text-sm text-green-600 font-semibold py-2">
-                You are ready! Waiting for others...
-              </div>
+              <div className="text-center text-sm text-green-600 font-semibold py-2">You are ready! Waiting for others...</div>
             )}
             {halfReached && (
-              <button
-                onClick={sealRoom}
-                disabled={sealing}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-500 to-purple-600 text-white font-bold text-sm mt-3 cursor-pointer hover:shadow-lg transition-all disabled:opacity-50"
-              >
+              <button onClick={sealRoom} disabled={sealing} className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-500 to-purple-600 text-white font-bold text-sm mt-3 cursor-pointer hover:shadow-lg transition-all disabled:opacity-50">
                 {sealing ? 'Sealing...' : 'Seal the Room!'}
               </button>
             )}
             {halfReached && (
-              <p className="text-xs text-center text-purple-600 font-medium mt-2">
-                Minimum members reached! Room can be sealed now.
-              </p>
+              <p className="text-xs text-center text-purple-600 font-medium mt-2">Minimum members reached! Room can be sealed now.</p>
             )}
           </div>
         )}
@@ -209,12 +182,17 @@ export default function RoomPage() {
                   onClick={() => { window.location.href = '/profile/' + member.username }}
                   className="flex items-center gap-3 hover:bg-green-50 rounded-xl p-2 transition-all cursor-pointer"
                 >
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold flex-shrink-0">
                     {member.username[0].toUpperCase()}
                   </div>
                   <div className="flex-1">
                     <div className="font-semibold text-gray-900 text-sm">{member.username}</div>
-                    <div className="text-xs text-gray-400">{member.status}</div>
+                    {/* ── AGE GROUP + GENDER shown only inside room ── */}
+                    {(member.age_group || member.gender) && (
+                      <div className="text-xs text-gray-400 mt-0.5">
+                        {[member.age_group, member.gender].filter(Boolean).join(' · ')}
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     {member.is_ready ? (
@@ -234,17 +212,11 @@ export default function RoomPage() {
 
         {/* CHAT + VIDEO */}
         <div className="grid grid-cols-2 gap-3 mb-4">
-          <div
-            onClick={() => { window.location.href = '/chat' }}
-            className="py-4 rounded-2xl bg-white border border-green-200 text-green-700 font-bold text-sm text-center hover:bg-green-50 transition-all cursor-pointer"
-          >
+          <div onClick={() => { window.location.href = '/chat' }} className="py-4 rounded-2xl bg-white border border-green-200 text-green-700 font-bold text-sm text-center hover:bg-green-50 transition-all cursor-pointer">
             Group Chat
           </div>
           {room?.is_sealed ? (
-            <div
-              onClick={() => { window.location.href = '/video-call' }}
-              className="py-4 rounded-2xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm text-center hover:shadow-lg transition-all cursor-pointer"
-            >
+            <div onClick={() => { window.location.href = '/video-call' }} className="py-4 rounded-2xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm text-center hover:shadow-lg transition-all cursor-pointer">
               Video Call Unlocked!
             </div>
           ) : (
@@ -256,18 +228,12 @@ export default function RoomPage() {
 
         {/* ITINERARY */}
         <div className="bg-white rounded-2xl border border-green-100 p-5 mb-4">
-          <h2 className="font-bold text-gray-900 mb-3">
-            {room?.is_sealed ? 'Full Itinerary' : 'Itinerary Preview'}
-          </h2>
+          <h2 className="font-bold text-gray-900 mb-3">{room?.is_sealed ? 'Full Itinerary' : 'Itinerary Preview'}</h2>
           {room?.itineraries ? (
             <div className="space-y-2">
               {room.itineraries.day_plan?.split('\n').map((day: string, i: number) => {
                 if (!room?.is_sealed && i >= 2) {
-                  return i === 2 ? (
-                    <div key={i} className="text-xs text-gray-400 italic mt-2">
-                      Seal the room to unlock full itinerary...
-                    </div>
-                  ) : null
+                  return i === 2 ? <div key={i} className="text-xs text-gray-400 italic mt-2">Seal the room to unlock full itinerary...</div> : null
                 }
                 return (
                   <div key={i} className="flex items-start gap-3 text-sm text-gray-600">
