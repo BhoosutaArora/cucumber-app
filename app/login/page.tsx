@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
 export default function Login() {
@@ -14,21 +14,44 @@ export default function Login() {
   const [message, setMessage] = useState('')
   const [messageType, setMessageType] = useState('')
 
-  async function handleAuth() {
+  // T&C popup states
+  const [showTerms, setShowTerms] = useState(false)
+  const [termsChecked, setTermsChecked] = useState(false)
+  const [hasScrolled, setHasScrolled] = useState(false)
+  const termsBoxRef = useRef<HTMLDivElement>(null)
+
+  function handleScroll() {
+    const el = termsBoxRef.current
+    if (!el) return
+    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 20
+    if (atBottom) setHasScrolled(true)
+  }
+
+  // Called when user clicks "Create Account" button
+  function handleSignUpClick() {
     if (!email || !password) {
       setMessage('Please enter your email and password')
       setMessageType('error')
       return
     }
+    if (!username) { setMessage('Please choose a username 🥒'); setMessageType('error'); return }
+    if (!age) { setMessage('Please enter your age 🥒'); setMessageType('error'); return }
+    if (!gender) { setMessage('Please select your gender 🥒'); setMessageType('error'); return }
+    if (parseInt(age) < 18) { setMessage('You must be 18+ to join Cucumber 🥒'); setMessageType('error'); return }
+
+    // All fields valid — show T&C popup
+    setShowTerms(true)
+    setTermsChecked(false)
+    setHasScrolled(false)
+  }
+
+  // Called after user agrees to T&C
+  async function handleAuth() {
+    setShowTerms(false)
     setLoading(true)
     setMessage('')
 
     if (isSignUp) {
-      if (!username) { setMessage('Please choose a username 🥒'); setMessageType('error'); setLoading(false); return }
-      if (!age) { setMessage('Please enter your age 🥒'); setMessageType('error'); setLoading(false); return }
-      if (!gender) { setMessage('Please select your gender 🥒'); setMessageType('error'); setLoading(false); return }
-      if (parseInt(age) < 18) { setMessage('You must be 18+ to join Cucumber 🥒'); setMessageType('error'); setLoading(false); return }
-
       const { data, error } = await supabase.auth.signUp({ email, password })
       if (error) {
         setMessage(
@@ -68,6 +91,30 @@ export default function Login() {
     setLoading(false)
   }
 
+  async function handleSignIn() {
+    if (!email || !password) {
+      setMessage('Please enter your email and password')
+      setMessageType('error')
+      return
+    }
+    setLoading(true)
+    setMessage('')
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) {
+      setMessage(
+        error.message === 'Email not confirmed'
+          ? 'Please confirm your email first! Check your inbox and spam folder for our confirmation email 🥒'
+          : error.message
+      )
+      setMessageType('error')
+    } else {
+      setMessage('Welcome back! 🥒')
+      setMessageType('success')
+      setTimeout(() => { window.location.href = '/dashboard' }, 1500)
+    }
+    setLoading(false)
+  }
+
   async function handleGoogle() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -80,6 +127,114 @@ export default function Login() {
     <main className="min-h-screen bg-green-50 flex items-center justify-center px-4 py-8">
       <div className="fixed top-0 right-0 w-64 h-64 rounded-full bg-green-200 opacity-20 -translate-y-1/2 translate-x-1/2 pointer-events-none" />
       <div className="fixed bottom-0 left-0 w-48 h-48 rounded-full bg-green-300 opacity-15 translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+
+      {/* ───────── TERMS & CONDITIONS POPUP ───────── */}
+      {showTerms && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
+
+            {/* Header */}
+            <div className="bg-gradient-to-br from-green-700 to-green-500 px-6 py-5 text-center">
+              <p className="text-2xl mb-1">📋</p>
+              <h2 className="text-white font-extrabold text-lg">Terms & Conditions</h2>
+              <p className="text-green-200 text-xs mt-1">Please read carefully before joining Cucumber</p>
+            </div>
+
+            {/* Scrollable terms body */}
+            <div
+              ref={termsBoxRef}
+              onScroll={handleScroll}
+              className="px-6 py-4 overflow-y-auto max-h-72 text-sm text-gray-700 space-y-4 border-b border-gray-100"
+            >
+              <div>
+                <p className="font-bold text-gray-900 mb-1">🪪 1. Bring Your Aadhaar Card</p>
+                <p>You must carry a valid government-issued photo ID (Aadhaar card or equivalent) to the trip meetup point. Without valid ID, you may be denied entry to the trip. This is non-negotiable for the safety of all travelers.</p>
+              </div>
+
+              <div>
+                <p className="font-bold text-gray-900 mb-1">✅ 2. Provide Accurate Details</p>
+                <p>You agree that all information you provide — including your name, age, gender, and contact details — is true and accurate. Providing false information is a violation of these terms and may result in immediate removal from the platform and the trip without refund.</p>
+              </div>
+
+              <div>
+                <p className="font-bold text-gray-900 mb-1">🧍 3. You Are Responsible for Your Conduct</p>
+                <p>You are solely responsible for your behavior during the trip. Cucumber is a platform that connects travelers — we are not liable for any personal disputes, accidents, losses, or incidents that occur during the trip. Travel safely and respectfully.</p>
+              </div>
+
+              <div>
+                <p className="font-bold text-gray-900 mb-1">🔞 4. Age Requirement</p>
+                <p>You confirm that you are at least 18 years of age. Minors are strictly not permitted on Cucumber trips.</p>
+              </div>
+
+              <div>
+                <p className="font-bold text-gray-900 mb-1">💸 5. Payments & Refunds</p>
+                <p>The ₹199 token payment is refundable within 24 hours of payment. The full trip payment of ₹6,999 is subject to the refund policy communicated at time of booking. Cucumber reserves the right to cancel a trip if minimum seats are not filled.</p>
+              </div>
+
+              <div>
+                <p className="font-bold text-gray-900 mb-1">🚫 6. Zero Tolerance Policy</p>
+                <p>Any form of harassment, discrimination, or misconduct toward fellow travelers or Cucumber staff will result in immediate removal from the trip and a permanent ban from the platform. No refund will be issued in such cases.</p>
+              </div>
+
+              <div>
+                <p className="font-bold text-gray-900 mb-1">📸 7. Photos & Privacy</p>
+                <p>By joining a trip, you consent to being photographed in group settings for Cucumber's social media and promotional use. If you do not consent, please inform the Trip Captain at the meetup point.</p>
+              </div>
+
+              <div>
+                <p className="font-bold text-gray-900 mb-1">📞 8. Emergency Contact</p>
+                <p>Cucumber may contact you via email or WhatsApp for trip updates, payment reminders, and emergency communication. By signing up you consent to receiving these messages.</p>
+              </div>
+
+              <div className="pb-2">
+                <p className="font-bold text-gray-900 mb-1">⚖️ 9. Governing Law</p>
+                <p>These terms are governed by the laws of India. Any disputes shall be subject to the jurisdiction of courts in Shimla, Himachal Pradesh.</p>
+              </div>
+            </div>
+
+            {/* Scroll hint */}
+            {!hasScrolled && (
+              <p className="text-center text-xs text-gray-400 pt-3 px-6 animate-bounce">
+                ↓ Scroll down to read all terms
+              </p>
+            )}
+
+            {/* Checkbox */}
+            <div className="px-6 pt-3 pb-4">
+              <label className={`flex items-start gap-3 cursor-pointer select-none ${!hasScrolled ? 'opacity-40 pointer-events-none' : ''}`}>
+                <input
+                  type="checkbox"
+                  checked={termsChecked}
+                  onChange={(e) => setTermsChecked(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 accent-green-500 cursor-pointer flex-shrink-0"
+                />
+                <span className="text-xs text-gray-600 leading-relaxed">
+                  I have read and agree to Cucumber's Terms & Conditions. I confirm I will carry valid ID, have provided accurate details, and understand I am responsible for my own conduct during the trip.
+                </span>
+              </label>
+            </div>
+
+            {/* Buttons */}
+            <div className="px-6 pb-6 flex gap-3">
+              <button
+                onClick={() => setShowTerms(false)}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-500 hover:bg-gray-50 transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAuth}
+                disabled={!termsChecked}
+                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white text-sm font-bold hover:shadow-lg hover:shadow-green-200 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              >
+                I Agree & Join 🥒
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+      {/* ───────── END POPUP ───────── */}
 
       <div className="bg-white rounded-3xl shadow-xl shadow-green-100 w-full max-w-md overflow-hidden">
 
@@ -177,7 +332,7 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Min. 6 characters"
-              onKeyDown={(e) => e.key === 'Enter' && handleAuth()}
+              onKeyDown={(e) => { if (e.key === 'Enter') { isSignUp ? handleSignUpClick() : handleSignIn() } }}
               className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
             />
           </div>
@@ -189,7 +344,7 @@ export default function Login() {
           )}
 
           <button
-            onClick={handleAuth}
+            onClick={isSignUp ? handleSignUpClick : handleSignIn}
             disabled={loading}
             className="w-full py-3 md:py-3.5 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:shadow-lg hover:shadow-green-200 hover:scale-[1.02] transition-all disabled:opacity-50 cursor-pointer"
           >
