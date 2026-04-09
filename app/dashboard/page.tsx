@@ -10,6 +10,8 @@ export default function Dashboard() {
   const [showUsernameModal, setShowUsernameModal] = useState(false)
   const [newUsernameInput, setNewUsernameInput] = useState('')
   const [usernameError, setUsernameError] = useState('')
+  const [rooms, setRooms] = useState<any[]>([])
+  const [memberRoomIds, setMemberRoomIds] = useState<number[]>([])
 
   // Google users profile completion
   const [showProfilePrompt, setShowProfilePrompt] = useState(false)
@@ -50,6 +52,22 @@ export default function Dashboard() {
           setPromptUsername(user.user_metadata?.full_name?.split(' ')[0]?.toLowerCase() || '')
           setUsername(user.email?.split('@')[0] || 'Traveler')
         }
+
+        // Fetch open rooms
+        const { data: roomsData } = await supabase
+          .from('Rooms')
+          .select('*')
+          .eq('status', 'Open')
+          .order('created_at', { ascending: true })
+        setRooms(roomsData || [])
+
+        // Get user's memberships
+        const { data: memberships } = await supabase
+          .from('room_members')
+          .select('room_id')
+          .eq('user_id', user.id)
+        setMemberRoomIds((memberships || []).map((m: any) => m.room_id))
+
         setLoading(false)
       }
     }
@@ -82,22 +100,11 @@ export default function Dashboard() {
     const cleaned = promptUsername.toLowerCase().trim()
     setPromptLoading(true)
     const { error } = await supabase.from('profiles').upsert({
-      id: user.id,
-      username: cleaned,
-      email: user.email,
-      age_group: promptAgeGroup,
-      gender: promptGender,
-      phone: promptPhone.trim(),
+      id: user.id, username: cleaned, email: user.email,
+      age_group: promptAgeGroup, gender: promptGender, phone: promptPhone.trim(),
     })
-
-    if (error) {
-      setPromptError('This username is already taken! Try another one 🥒')
-      setPromptLoading(false)
-    } else {
-      setUsername(cleaned)
-      setShowProfilePrompt(false)
-      setPromptLoading(false)
-    }
+    if (error) { setPromptError('This username is already taken! Try another one 🥒'); setPromptLoading(false) }
+    else { setUsername(cleaned); setShowProfilePrompt(false); setPromptLoading(false) }
   }
 
   async function handleSignOut() {
@@ -122,7 +129,7 @@ export default function Dashboard() {
   return (
     <div>
 
-      {/* ── T&C POPUP FOR GOOGLE USERS ── */}
+      {/* ── T&C POPUP ── */}
       {showTerms && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center px-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
@@ -132,24 +139,23 @@ export default function Dashboard() {
               <p className="text-green-200 text-xs mt-1">Please read carefully before joining Cucumber</p>
             </div>
             <div ref={termsBoxRef} onScroll={handleTermsScroll} className="px-6 py-4 overflow-y-auto max-h-64 text-sm text-gray-700 space-y-4 border-b border-gray-100">
-              <div><p className="font-bold text-gray-900 mb-1">🪪 1. Bring Your Aadhaar Card</p><p>You must carry a valid government-issued photo ID to the trip meetup point. Without valid ID, you may be denied entry.</p></div>
+              <div><p className="font-bold text-gray-900 mb-1">🪪 1. Bring Your Aadhaar Card</p><p>You must carry a valid government-issued photo ID to the trip meetup point.</p></div>
               <div><p className="font-bold text-gray-900 mb-1">✅ 2. Provide Accurate Details</p><p>All information must be true and accurate. False information may result in removal without refund.</p></div>
-              <div><p className="font-bold text-gray-900 mb-1">🧍 3. You Are Responsible for Your Conduct</p><p>You are solely responsible for your behavior during the trip. Cucumber is not liable for disputes or incidents.</p></div>
-              <div><p className="font-bold text-gray-900 mb-1">🔞 4. Age Requirement</p><p>You confirm you are at least 18 years of age. Minors are strictly not permitted.</p></div>
-              <div><p className="font-bold text-gray-900 mb-1">💸 5. Payments & Refunds</p><p>₹199 token refundable within 24 hours. Full trip: 90% refund 30+ days before, 50% refund 15-30 days before, no refund within 15 days.</p></div>
-              <div><p className="font-bold text-gray-900 mb-1">🚫 6. Zero Tolerance Policy</p><p>Any harassment results in immediate removal and permanent ban without refund.</p></div>
-              <div><p className="font-bold text-gray-900 mb-1">📞 7. Emergency Contact</p><p className="pb-2">Cucumber may contact you via WhatsApp for trip updates. By signing up you consent to these messages.</p></div>
+              <div><p className="font-bold text-gray-900 mb-1">🧍 3. You Are Responsible for Your Conduct</p><p>You are solely responsible for your behavior during the trip.</p></div>
+              <div><p className="font-bold text-gray-900 mb-1">🔞 4. Age Requirement</p><p>You confirm you are at least 18 years of age.</p></div>
+              <div><p className="font-bold text-gray-900 mb-1">💸 5. Payments & Refunds</p><p>₹199 token refundable within 24 hours. Full trip refund depends on cancellation timing.</p></div>
+              <div><p className="font-bold text-gray-900 mb-1">🚫 6. Zero Tolerance Policy</p><p className="pb-2">Any harassment results in immediate removal and permanent ban without refund.</p></div>
             </div>
             {!hasScrolled && <p className="text-center text-xs text-gray-400 pt-3 px-6 animate-bounce">↓ Scroll down to read all terms</p>}
             <div className="px-6 pt-3 pb-4">
               <label className={`flex items-start gap-3 cursor-pointer select-none ${!hasScrolled ? 'opacity-40 pointer-events-none' : ''}`}>
                 <input type="checkbox" checked={termsChecked} onChange={(e) => setTermsChecked(e.target.checked)} className="mt-0.5 w-4 h-4 accent-green-500 cursor-pointer flex-shrink-0" />
-                <span className="text-xs text-gray-600 leading-relaxed">I have read and agree to Cucumber's Terms & Conditions. I confirm I will carry valid ID and am responsible for my own conduct.</span>
+                <span className="text-xs text-gray-600 leading-relaxed">I have read and agree to Cucumber's Terms & Conditions.</span>
               </label>
             </div>
             <div className="px-6 pb-6 flex gap-3">
-              <button onClick={() => setShowTerms(false)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-500 hover:bg-gray-50 transition-all cursor-pointer">Cancel</button>
-              <button onClick={handleProfilePromptSave} disabled={!termsChecked || promptLoading} className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer">
+              <button onClick={() => setShowTerms(false)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-500 cursor-pointer">Cancel</button>
+              <button onClick={handleProfilePromptSave} disabled={!termsChecked || promptLoading} className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white text-sm font-bold disabled:opacity-40 cursor-pointer">
                 {promptLoading ? 'Saving...' : 'I Agree & Join 🥒'}
               </button>
             </div>
@@ -157,7 +163,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ── GOOGLE USERS PROFILE PROMPT ── */}
+      {/* ── PROFILE PROMPT ── */}
       {showProfilePrompt && !showTerms && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
@@ -169,13 +175,13 @@ export default function Dashboard() {
             <div className="px-6 py-5">
               <div className="mb-4">
                 <label className="block text-xs font-bold text-gray-500 mb-1.5">Username</label>
-                <input type="text" value={promptUsername} onChange={(e) => { setPromptUsername(e.target.value); setPromptError('') }} placeholder="e.g. hills_over_malls" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all" />
+                <input type="text" value={promptUsername} onChange={(e) => { setPromptUsername(e.target.value); setPromptError('') }} placeholder="e.g. hills_over_malls" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-green-400 transition-all" />
               </div>
               <div className="mb-4">
                 <label className="block text-xs font-bold text-gray-500 mb-1.5">Age Group</label>
                 <div className="grid grid-cols-3 gap-2">
                   {['18-24', '25-30', '31+'].map((a) => (
-                    <button key={a} type="button" onClick={() => setPromptAgeGroup(a)} className={'py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ' + (promptAgeGroup === a ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-600 border-gray-200 hover:border-green-300')}>{a}</button>
+                    <button key={a} type="button" onClick={() => setPromptAgeGroup(a)} className={'py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ' + (promptAgeGroup === a ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-600 border-gray-200')}>{a}</button>
                   ))}
                 </div>
               </div>
@@ -183,7 +189,7 @@ export default function Dashboard() {
                 <label className="block text-xs font-bold text-gray-500 mb-1.5">Gender</label>
                 <div className="grid grid-cols-3 gap-2">
                   {['Male', 'Female', 'Other'].map((g) => (
-                    <button key={g} type="button" onClick={() => setPromptGender(g)} className={'py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ' + (promptGender === g ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-600 border-gray-200 hover:border-green-300')}>{g}</button>
+                    <button key={g} type="button" onClick={() => setPromptGender(g)} className={'py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ' + (promptGender === g ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-600 border-gray-200')}>{g}</button>
                   ))}
                 </div>
               </div>
@@ -191,14 +197,11 @@ export default function Dashboard() {
                 <label className="block text-xs font-bold text-gray-500 mb-1.5">Phone Number</label>
                 <div className="flex gap-2">
                   <div className="flex items-center px-3 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-500 font-semibold">🇮🇳 +91</div>
-                  <input type="tel" value={promptPhone} onChange={(e) => setPromptPhone(e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="Enter your number" className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all" />
+                  <input type="tel" value={promptPhone} onChange={(e) => setPromptPhone(e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="Enter your number" className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-green-400 transition-all" />
                 </div>
-                <p className="text-xs text-gray-400 mt-1">We will send trip updates on WhatsApp</p>
               </div>
               {promptError && <div className="text-xs text-red-500 font-medium mb-3">{promptError}</div>}
-              <button onClick={handleContinueClick} className="w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:shadow-lg transition-all cursor-pointer">
-                Continue →
-              </button>
+              <button onClick={handleContinueClick} className="w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:shadow-lg transition-all cursor-pointer">Continue →</button>
             </div>
           </div>
         </div>
@@ -211,22 +214,19 @@ export default function Dashboard() {
             <div className="text-center mb-5">
               <div className="text-3xl mb-2">🥒</div>
               <h2 className="text-xl font-extrabold text-gray-900">Choose your username</h2>
-              <p className="text-xs text-gray-400 mt-1">Letters, numbers and underscores only. 3-20 characters.</p>
             </div>
-            <input type="text" value={newUsernameInput} onChange={(e) => { setNewUsernameInput(e.target.value); setUsernameError('') }} placeholder="e.g. hills_over_malls" className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all mb-3" />
+            <input type="text" value={newUsernameInput} onChange={(e) => { setNewUsernameInput(e.target.value); setUsernameError('') }} placeholder="e.g. hills_over_malls" className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:border-green-400 transition-all mb-3" />
             {usernameError && <div className="text-xs text-red-500 font-medium mb-3">{usernameError}</div>}
             <button onClick={async () => {
               const cleaned = newUsernameInput.toLowerCase().trim()
-              if (cleaned.length < 3) { setUsernameError('Too short! Minimum 3 characters.'); return }
-              if (cleaned.length > 20) { setUsernameError('Too long! Maximum 20 characters.'); return }
-              if (!/^[a-z0-9_]+$/.test(cleaned)) { setUsernameError('Only letters, numbers and underscores allowed!'); return }
+              if (cleaned.length < 3) { setUsernameError('Too short!'); return }
+              if (cleaned.length > 20) { setUsernameError('Too long!'); return }
+              if (!/^[a-z0-9_]+$/.test(cleaned)) { setUsernameError('Only letters, numbers and underscores!'); return }
               const { error } = await supabase.from('profiles').upsert({ id: user.id, username: cleaned, email: user.email })
-              if (error) { setUsernameError('This username is already taken! Try another one 🥒') }
+              if (error) { setUsernameError('Username taken! Try another 🥒') }
               else { setUsername(cleaned); setShowUsernameModal(false); setNewUsernameInput('') }
-            }} className="w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:shadow-lg transition-all mb-2 cursor-pointer">
-              Save Username 🥒
-            </button>
-            <button onClick={() => { setShowUsernameModal(false); setNewUsernameInput(''); setUsernameError('') }} className="w-full py-2.5 rounded-xl border border-gray-200 text-gray-500 text-sm font-semibold hover:bg-gray-50 transition-all cursor-pointer">Cancel</button>
+            }} className="w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm mb-2 cursor-pointer">Save Username 🥒</button>
+            <button onClick={() => { setShowUsernameModal(false); setNewUsernameInput(''); setUsernameError('') }} className="w-full py-2.5 rounded-xl border border-gray-200 text-gray-500 text-sm cursor-pointer">Cancel</button>
           </div>
         </div>
       )}
@@ -261,7 +261,7 @@ export default function Dashboard() {
                   <div className="text-green-200 text-xs md:text-sm font-semibold mb-1">Welcome back 👋</div>
                   <div className="flex items-center gap-2">
                     <div className="text-white text-2xl md:text-3xl font-extrabold tracking-tight mb-1">Hey {userName}! 🥒</div>
-                    <button onClick={() => setShowUsernameModal(true)} className="text-white/70 hover:text-white text-lg transition-all cursor-pointer" title="Edit username">✏️</button>
+                    <button onClick={() => setShowUsernameModal(true)} className="text-white/70 hover:text-white text-lg transition-all cursor-pointer">✏️</button>
                   </div>
                   <div className="text-green-200 text-xs md:text-sm">Ready for your next adventure?</div>
                 </div>
@@ -283,6 +283,7 @@ export default function Dashboard() {
             {/* ── LEFT ── */}
             <div className="md:col-span-2 flex flex-col gap-5 md:gap-6">
 
+              {/* upcoming trips */}
               <div className="bg-white rounded-2xl border border-green-100 overflow-hidden">
                 <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-green-50">
                   <div className="font-bold text-gray-900 text-base md:text-lg">My Upcoming Trips</div>
@@ -296,28 +297,46 @@ export default function Dashboard() {
                 </div>
               </div>
 
+              {/* ── BOTH ROOMS SIDE BY SIDE ── */}
               <div className="bg-white rounded-2xl border border-green-100 overflow-hidden">
                 <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-green-50">
-                  <div className="font-bold text-gray-900 text-base md:text-lg">Open Now</div>
+                  <div className="font-bold text-gray-900 text-base md:text-lg">Open Trips</div>
                   <a href="/rooms" className="text-xs font-bold text-green-600 hover:underline">See all →</a>
                 </div>
-                <div className="p-5">
-                  <div className="rounded-xl border border-green-100 overflow-hidden hover:-translate-y-1 hover:shadow-lg transition-all">
-                    <div className="h-32 relative overflow-hidden">
-                      <img src="https://qutczfwmdqlpeslqcwnt.supabase.co/storage/v1/object/public/image/yash-kiran-qxp9X5t9hQ4-unsplash.jpg" alt="Shimla" className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                      <span className="absolute bottom-2 left-2 text-xs font-bold text-white bg-black/30 px-2 py-1 rounded-lg">📍 Shimla, HP</span>
-                    </div>
-                    <div className="p-4">
-                      <div className="font-bold text-gray-900 text-base mb-1">Weekend Shimla 🏔️</div>
-                      <div className="text-xs text-gray-400 mb-3">Apr 10–12, 2026 · 8 people max</div>
-                      <div className="flex items-center justify-between">
-                        <div className="text-lg font-extrabold text-green-700">₹3,499</div>
-                        <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full">🌱 Open</span>
+                <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {rooms.map((room: any) => {
+                    const seatsLeft = (room.seats_total || 8) - (room.seats_filled || 0)
+                    const isAlreadyMember = memberRoomIds.includes(room.id)
+                    return (
+                      <div key={room.id} className="rounded-xl border border-green-100 overflow-hidden hover:-translate-y-1 hover:shadow-lg transition-all">
+                        <div className="h-28 relative overflow-hidden">
+                          {room.image_url ? (
+                            <img src={room.image_url} alt={room.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-green-800 to-green-600" />
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                          {isAlreadyMember && <span className="absolute top-2 right-2 text-xs font-bold bg-green-500 text-white px-2 py-0.5 rounded-full">✅ Joined</span>}
+                          <span className="absolute bottom-2 left-2 text-xs font-bold text-white bg-black/30 px-2 py-1 rounded-lg">📍 {room.destination}</span>
+                        </div>
+                        <div className="p-3">
+                          <div className="font-bold text-gray-900 text-sm mb-1">{room.name}</div>
+                          <div className="text-xs text-gray-400 mb-2">{room.dates}</div>
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="text-base font-extrabold text-green-700">₹{room.price?.toLocaleString()}</div>
+                            <span className={`text-xs font-bold ${seatsLeft <= 2 ? 'text-red-500' : 'text-green-600'}`}>
+                              {seatsLeft <= 2 ? '🔥 Almost full!' : `🌱 ${seatsLeft} left`}
+                            </span>
+                          </div>
+                          {isAlreadyMember ? (
+                            <a href={'/rooms/' + room.id + '/room'} className="block w-full py-2 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white text-xs font-bold text-center cursor-pointer">Enter Room →</a>
+                          ) : (
+                            <a href={'/rooms/' + room.id} className="block w-full py-2 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white text-xs font-bold text-center cursor-pointer">View & Join →</a>
+                          )}
+                        </div>
                       </div>
-                      <a href="/rooms/2" className="block w-full mt-3 py-2.5 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm text-center hover:scale-105 transition-transform cursor-pointer">View Room & Join →</a>
-                    </div>
-                  </div>
+                    )
+                  })}
                 </div>
               </div>
             </div>
@@ -325,6 +344,7 @@ export default function Dashboard() {
             {/* ── RIGHT ── */}
             <div className="flex flex-col gap-5 md:gap-6">
 
+              {/* profile card */}
               <div className="bg-white rounded-2xl border border-green-100 overflow-hidden">
                 <div className="bg-gradient-to-br from-green-600 to-green-400 h-14 md:h-16 relative">
                   <div className="absolute -bottom-6 left-1/2 -translate-x-1/2">
@@ -347,6 +367,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
+              {/* quick actions */}
               <div className="bg-white rounded-2xl border border-green-100 p-4">
                 <div className="font-bold text-gray-900 text-sm md:text-base mb-3">Quick Actions</div>
                 {[
@@ -363,6 +384,7 @@ export default function Dashboard() {
                 ))}
               </div>
 
+              {/* account info */}
               <div className="bg-green-50 rounded-2xl border border-green-100 p-4">
                 <div className="font-bold text-green-700 text-xs md:text-sm mb-2">✅ Account Active</div>
                 <div className="text-xs text-gray-500 leading-relaxed">Complete your profile to unlock all features and join travel rooms.</div>
