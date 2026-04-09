@@ -48,7 +48,7 @@ export default function Login() {
     if (!ageGroup) { setMessage('Please select your age group 🥒'); setMessageType('error'); return }
     if (!gender) { setMessage('Please select your gender 🥒'); setMessageType('error'); return }
     if (!phone) { setMessage('Please enter your phone number 🥒'); setMessageType('error'); return }
-    if (phone.length < 10) { setMessage('Please enter a valid phone number 🥒'); setMessageType('error'); return }
+    if (phone.length < 10) { setMessage('Please enter a valid 10 digit phone number 🥒'); setMessageType('error'); return }
     setShowTerms(true)
     setTermsChecked(false)
     setHasScrolled(false)
@@ -77,8 +77,8 @@ export default function Login() {
           phone: phone.trim(),
         })
       }
-      setMessage('We sent a confirmation email to ' + email + ' — open it on any device and click the link. This page will automatically take you to dashboard! 🥒')
-      setMessageType('success')
+      // No email confirmation message — redirect straight to dashboard
+      window.location.href = '/dashboard'
     }
     setLoading(false)
   }
@@ -89,16 +89,10 @@ export default function Login() {
     setMessage('')
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
-      setMessage(
-        error.message === 'Email not confirmed'
-          ? 'Please confirm your email first! Check your inbox and spam folder 🥒'
-          : error.message
-      )
+      setMessage(error.message)
       setMessageType('error')
     } else {
-      setMessage('Welcome back! 🥒')
-      setMessageType('success')
-      setTimeout(() => { window.location.href = '/dashboard' }, 1500)
+      window.location.href = '/dashboard'
     }
     setLoading(false)
   }
@@ -128,43 +122,39 @@ export default function Login() {
             <div ref={termsBoxRef} onScroll={handleScroll} className="px-6 py-4 overflow-y-auto max-h-72 text-sm text-gray-700 space-y-4 border-b border-gray-100">
               <div>
                 <p className="font-bold text-gray-900 mb-1">🪪 1. Bring Your Aadhaar Card</p>
-                <p>You must carry a valid government-issued photo ID (Aadhaar card or equivalent) to the trip meetup point. Without valid ID, you may be denied entry to the trip. This is non-negotiable for the safety of all travelers.</p>
+                <p>You must carry a valid government-issued photo ID to the trip meetup point. Without valid ID, you may be denied entry to the trip. This is non-negotiable for the safety of all travelers.</p>
               </div>
               <div>
                 <p className="font-bold text-gray-900 mb-1">✅ 2. Provide Accurate Details</p>
-                <p>You agree that all information you provide — including your name, age group, gender, phone number and contact details — is true and accurate. Providing false information is a violation of these terms and may result in immediate removal from the platform and the trip without refund.</p>
+                <p>All information you provide — including your name, age group, gender, phone number — must be true and accurate. Providing false information may result in removal from the platform without refund.</p>
               </div>
               <div>
                 <p className="font-bold text-gray-900 mb-1">🧍 3. You Are Responsible for Your Conduct</p>
-                <p>You are solely responsible for your behavior during the trip. Cucumber is a platform that connects travelers — we are not liable for any personal disputes, accidents, losses, or incidents that occur during the trip. Travel safely and respectfully.</p>
+                <p>You are solely responsible for your behavior during the trip. Cucumber is not liable for any personal disputes or incidents during the trip.</p>
               </div>
               <div>
                 <p className="font-bold text-gray-900 mb-1">🔞 4. Age Requirement</p>
                 <p>You confirm that you are at least 18 years of age. Minors are strictly not permitted on Cucumber trips.</p>
               </div>
               <div>
-  <p className="font-bold text-gray-900 mb-1">💸 5. Payments & Refunds</p>
-  <p>
-    <strong>₹199 Token:</strong> Fully refunded if cancelled within 24 hours of payment. No refund after 24 hours.{'\n'}
-    <strong>₹6,999 Full Payment:</strong> 90% refund (₹6,299) if cancelled 30+ days before trip. 50% refund (₹3,499) if cancelled 15–30 days before. No refund if cancelled less than 15 days before trip.{'\n'}
-    Cucumber reserves the right to cancel a trip if minimum seats are not filled — full refund issued in that case.
-  </p>
-</div>
+                <p className="font-bold text-gray-900 mb-1">💸 5. Payments & Refunds</p>
+                <p>₹199 token is refundable within 24 hours. Full trip refund: 90% if cancelled 30+ days before, 50% if 15-30 days before, no refund within 15 days of trip.</p>
+              </div>
               <div>
                 <p className="font-bold text-gray-900 mb-1">🚫 6. Zero Tolerance Policy</p>
-                <p>Any form of harassment, discrimination, or misconduct toward fellow travelers or Cucumber staff will result in immediate removal from the trip and a permanent ban from the platform. No refund will be issued in such cases.</p>
+                <p>Any harassment or misconduct will result in immediate removal and permanent ban without refund.</p>
               </div>
               <div>
                 <p className="font-bold text-gray-900 mb-1">📸 7. Photos & Privacy</p>
-                <p>By joining a trip, you consent to being photographed in group settings for Cucumber's social media and promotional use. If you do not consent, please inform the Trip Captain at the meetup point.</p>
+                <p>By joining a trip, you consent to being photographed in group settings for Cucumber's social media use.</p>
               </div>
               <div>
                 <p className="font-bold text-gray-900 mb-1">📞 8. Emergency Contact</p>
-                <p>Cucumber may contact you via email or WhatsApp for trip updates, payment reminders, and emergency communication. By signing up you consent to receiving these messages.</p>
+                <p>Cucumber may contact you via WhatsApp for trip updates and emergencies. By signing up you consent to these messages.</p>
               </div>
               <div className="pb-2">
                 <p className="font-bold text-gray-900 mb-1">⚖️ 9. Governing Law</p>
-                <p>These terms are governed by the laws of India. Any disputes shall be subject to the jurisdiction of courts in Shimla, Himachal Pradesh.</p>
+                <p>These terms are governed by the laws of India. Disputes subject to jurisdiction of courts in Shimla, Himachal Pradesh.</p>
               </div>
             </div>
             {!hasScrolled && (
@@ -173,12 +163,12 @@ export default function Login() {
             <div className="px-6 pt-3 pb-4">
               <label className={`flex items-start gap-3 cursor-pointer select-none ${!hasScrolled ? 'opacity-40 pointer-events-none' : ''}`}>
                 <input type="checkbox" checked={termsChecked} onChange={(e) => setTermsChecked(e.target.checked)} className="mt-0.5 w-4 h-4 accent-green-500 cursor-pointer flex-shrink-0" />
-                <span className="text-xs text-gray-600 leading-relaxed">I have read and agree to Cucumber's Terms & Conditions. I confirm I will carry valid ID, have provided accurate details, and understand I am responsible for my own conduct during the trip.</span>
+                <span className="text-xs text-gray-600 leading-relaxed">I have read and agree to Cucumber's Terms & Conditions. I confirm I will carry valid ID and am responsible for my own conduct during the trip.</span>
               </label>
             </div>
             <div className="px-6 pb-6 flex gap-3">
               <button onClick={() => setShowTerms(false)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-500 hover:bg-gray-50 transition-all cursor-pointer">Cancel</button>
-              <button onClick={handleAuth} disabled={!termsChecked} className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white text-sm font-bold hover:shadow-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer">I Agree & Join 🥒</button>
+              <button onClick={handleAuth} disabled={!termsChecked} className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer">I Agree & Join 🥒</button>
             </div>
           </div>
         </div>
@@ -219,42 +209,27 @@ export default function Login() {
                 <label className="block text-xs font-bold text-gray-500 mb-1.5">Username</label>
                 <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="e.g. hills_over_malls" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all" />
               </div>
-
               <div className="mb-3">
                 <label className="block text-xs font-bold text-gray-500 mb-1.5">Age Group</label>
                 <div className="grid grid-cols-3 gap-2">
                   {['18-24', '25-30', '31+'].map((a) => (
-                    <button key={a} type="button" onClick={() => setAgeGroup(a)} className={'py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ' + (ageGroup === a ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-600 border-gray-200 hover:border-green-300')}>
-                      {a}
-                    </button>
+                    <button key={a} type="button" onClick={() => setAgeGroup(a)} className={'py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ' + (ageGroup === a ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-600 border-gray-200 hover:border-green-300')}>{a}</button>
                   ))}
                 </div>
               </div>
-
               <div className="mb-3">
                 <label className="block text-xs font-bold text-gray-500 mb-1.5">Gender</label>
                 <div className="grid grid-cols-3 gap-2">
                   {['Male', 'Female', 'Other'].map((g) => (
-                    <button key={g} type="button" onClick={() => setGender(g)} className={'py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ' + (gender === g ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-600 border-gray-200 hover:border-green-300')}>
-                      {g}
-                    </button>
+                    <button key={g} type="button" onClick={() => setGender(g)} className={'py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ' + (gender === g ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-600 border-gray-200 hover:border-green-300')}>{g}</button>
                   ))}
                 </div>
               </div>
-
               <div className="mb-3">
                 <label className="block text-xs font-bold text-gray-500 mb-1.5">Phone Number</label>
                 <div className="flex gap-2">
-                  <div className="flex items-center px-3 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-500 font-semibold">
-                    🇮🇳 +91
-                  </div>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                    placeholder="Enter your number"
-                    className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
-                  />
+                  <div className="flex items-center px-3 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-500 font-semibold">🇮🇳 +91</div>
+                  <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="Enter your number" className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all" />
                 </div>
                 <p className="text-xs text-gray-400 mt-1">We will send trip updates on WhatsApp</p>
               </div>
