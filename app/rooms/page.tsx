@@ -7,32 +7,41 @@ export default function Rooms() {
   const [rooms, setRooms] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [username, setUsername] = useState('')
+  const [userId, setUserId] = useState<string | null>(null)
+  const [myRoomIds, setMyRoomIds] = useState<number[]>([])
 
   useEffect(() => {
-    async function fetchRooms() {
-      const { data, error } = await supabase
-        .from('Rooms')
-        .select('*')
-        .order('created_at', { ascending: false })
-      if (error) console.error('Error fetching rooms:', error)
-      else setRooms(data || [])
-      setLoading(false)
-    }
-
-    async function checkUser() {
+    async function init() {
+      // Check user
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
+        setUserId(user.id)
         const { data: profile } = await supabase
           .from('profiles')
           .select('username')
           .eq('id', user.id)
           .single()
         setUsername(profile?.username || user.email?.split('@')[0] || 'Traveler')
-      }
-    }
 
-    fetchRooms()
-    checkUser()
+        // Get rooms user is already in
+        const { data: memberships } = await supabase
+          .from('room_members')
+          .select('room_id')
+          .eq('user_id', user.id)
+        setMyRoomIds((memberships || []).map((m: any) => m.room_id))
+      }
+
+      // Fetch only Open rooms
+      const { data, error } = await supabase
+        .from('Rooms')
+        .select('*')
+        .eq('status', 'Open')
+        .order('created_at', { ascending: false })
+      if (error) console.error('Error fetching rooms:', error)
+      else setRooms(data || [])
+      setLoading(false)
+    }
+    init()
   }, [])
 
   if (loading) {
@@ -74,12 +83,13 @@ export default function Rooms() {
         </div>
       </nav>
 
+      {/* HEADER */}
       <section className="pt-20 md:pt-28 pb-8 md:pb-12 px-4 md:px-16 bg-green-50 border-b border-green-100">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div>
             <div className="inline-flex items-center gap-2 bg-white border border-green-200 rounded-full px-3 md:px-4 py-1.5 md:py-2 text-xs font-bold text-green-700 mb-4 shadow-sm">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-ping inline-block" />
-              {rooms.length} rooms open right now
+              {rooms.length} trip{rooms.length !== 1 ? 's' : ''} open right now
             </div>
             <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight mb-2 md:mb-3">
               Travel <span className="text-green-500">Rooms</span>
@@ -87,22 +97,18 @@ export default function Rooms() {
             <p className="text-sm md:text-lg text-gray-500">Find your tribe. Travel together.</p>
           </div>
           <div className="flex items-center gap-3 md:gap-6">
-            {[
-              { num: rooms.length.toString(), label: 'Active rooms' },
-              { num: '89', label: 'Online now' },
-            ].map((s) => (
-              <div key={s.label} className="text-center bg-white rounded-2xl px-5 md:px-8 py-3 md:py-4 border border-green-100 shadow-sm">
-                <div className="text-2xl md:text-3xl font-extrabold text-green-700">{s.num}</div>
-                <div className="text-xs text-gray-400 mt-1">{s.label}</div>
-              </div>
-            ))}
+            <div className="text-center bg-white rounded-2xl px-5 md:px-8 py-3 md:py-4 border border-green-100 shadow-sm">
+              <div className="text-2xl md:text-3xl font-extrabold text-green-700">{rooms.length}</div>
+              <div className="text-xs text-gray-400 mt-1">Active trips</div>
+            </div>
           </div>
         </div>
       </section>
 
+      {/* FILTER BAR */}
       <section className="px-4 md:px-16 py-4 md:py-5 bg-white border-b border-green-50 sticky top-14 md:top-16 z-40">
         <div className="max-w-7xl mx-auto flex items-center gap-2 md:gap-3 overflow-x-auto pb-1">
-          {["All Vibes", "Adventure", "Peaceful", "Explorer", "Beach"].map((f, i) => (
+          {["All Vibes", "Adventure", "Peaceful", "Cultural", "Explorer", "Beach"].map((f, i) => (
             <button key={f} className={'px-3 md:px-5 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-semibold border transition-all whitespace-nowrap cursor-pointer ' + (i === 0 ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-500 border-gray-200 hover:border-green-300 hover:text-green-700')}>
               {f}
             </button>
@@ -115,6 +121,7 @@ export default function Rooms() {
         </div>
       </section>
 
+      {/* ROOMS GRID */}
       <section className="px-4 md:px-16 py-6 md:py-10 max-w-7xl mx-auto">
         {rooms.length === 0 ? (
           <div className="text-center py-20">
@@ -126,9 +133,13 @@ export default function Rooms() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {rooms.map((room: any) => {
               const pct = Math.round(((room.seats_filled || 0) / (room.seats_total || 10)) * 100)
+              const isAlreadyMember = myRoomIds.includes(room.id)
+              const seatsLeft = (room.seats_total || 10) - (room.seats_filled || 0)
+
               return (
                 <div key={room.id} className="bg-white rounded-2xl overflow-hidden border border-green-100 hover:-translate-y-1 hover:shadow-xl transition-all duration-300">
 
+                  {/* Room image */}
                   <div className="relative h-48 overflow-hidden cursor-pointer" onClick={() => { window.location.href = '/rooms/' + room.id }}>
                     {room.image_url ? (
                       <img src={room.image_url} alt={room.name} className="w-full h-full object-cover" />
@@ -141,12 +152,20 @@ export default function Rooms() {
                         <div className="text-white font-extrabold text-lg leading-tight">{room.name}</div>
                         <div className="text-white/80 text-xs mt-0.5">📍 {room.destination}</div>
                       </div>
-                      <span className="text-xs font-bold bg-white/20 backdrop-blur text-white px-2 py-1 rounded-full flex-shrink-0">
-                        {room.vibe}
-                      </span>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="text-xs font-bold bg-white/20 backdrop-blur text-white px-2 py-1 rounded-full">
+                          {room.vibe}
+                        </span>
+                        {isAlreadyMember && (
+                          <span className="text-xs font-bold bg-green-500/80 text-white px-2 py-1 rounded-full">
+                            ✅ Joined
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
+                  {/* Room details */}
                   <div className="p-4">
                     <div className="flex items-center justify-between mb-2">
                       <div>
@@ -159,27 +178,26 @@ export default function Rooms() {
                       <div className="flex justify-between text-xs mb-1">
                         <span className="font-semibold text-gray-600">{room.seats_filled || 0} / {room.seats_total || 10} seats</span>
                         <span className={pct >= 80 ? 'text-orange-500 font-bold' : 'text-green-600 font-bold'}>
-                          {pct >= 80 ? 'Almost full' : 'Open'}
+                          {seatsLeft} left
                         </span>
                       </div>
                       <div className="h-1.5 bg-green-100 rounded-full overflow-hidden">
-                        <div
-                          className={'h-full rounded-full ' + (pct >= 80 ? 'bg-gradient-to-r from-orange-400 to-red-500' : 'bg-gradient-to-r from-green-400 to-green-500')}
-                          style={{ width: pct + '%' }}
-                        />
+                        <div className={'h-full rounded-full ' + (pct >= 80 ? 'bg-gradient-to-r from-orange-400 to-red-500' : 'bg-gradient-to-r from-green-400 to-green-500')} style={{ width: pct + '%' }} />
                       </div>
                     </div>
+
+                    {/* Buttons — changes based on membership */}
                     <div className="flex gap-2">
-                      <button
-                        onClick={() => { window.location.href = '/rooms/' + room.id + '/join' }}
-                        className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white text-sm font-bold hover:shadow-lg transition-all cursor-pointer"
-                      >
-                        Join Room
-                      </button>
-                      <button
-                        onClick={() => { window.location.href = '/rooms/' + room.id }}
-                        className="px-4 py-2.5 rounded-xl border border-green-200 text-green-700 text-sm font-semibold hover:bg-green-50 transition-all cursor-pointer"
-                      >
+                      {isAlreadyMember ? (
+                        <button onClick={() => { window.location.href = '/rooms/' + room.id + '/room' }} className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white text-sm font-bold hover:shadow-lg transition-all cursor-pointer">
+                          Enter Room →
+                        </button>
+                      ) : (
+                        <button onClick={() => { window.location.href = '/rooms/' + room.id + '/join' }} className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white text-sm font-bold hover:shadow-lg transition-all cursor-pointer">
+                          Join Room
+                        </button>
+                      )}
+                      <button onClick={() => { window.location.href = '/rooms/' + room.id }} className="px-4 py-2.5 rounded-xl border border-green-200 text-green-700 text-sm font-semibold hover:bg-green-50 transition-all cursor-pointer">
                         Details
                       </button>
                     </div>
