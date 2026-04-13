@@ -148,6 +148,7 @@ export default function Home() {
         </div>
         <div className="hidden md:flex items-center gap-8">
           <a href="/rooms" className="text-sm font-medium text-gray-500 hover:text-green-700 transition-colors">Trips</a>
+          <a href="/explore" className="text-sm font-medium text-gray-500 hover:text-green-700 transition-colors">Explore</a>
           <a href="/dashboard" className="text-sm font-medium text-gray-500 hover:text-green-700 transition-colors">Dashboard</a>
         </div>
         <div className="flex items-center gap-2 md:gap-3">
