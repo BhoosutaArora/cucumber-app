@@ -2,7 +2,7 @@
 import Navbar from '../components/Navbar'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import Navbar from '../components/Navbar'
+
 
 export default function Rooms() {
   const [rooms, setRooms] = useState<any[]>([])
