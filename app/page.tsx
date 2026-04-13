@@ -235,16 +235,19 @@ export default function Home() {
           const timeAgo = post.created_at
             ? new Date(post.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
             : ''
+          const profileUrl = '/profile/' + (post.author_name || '')
 
           return (
             <div key={post.id} className="bg-white rounded-2xl border border-green-100 overflow-hidden shadow-sm hover:shadow-md transition-all">
 
               <div className="flex items-center gap-3 p-4 pb-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold flex-shrink-0">
+                <a href={profileUrl} className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold flex-shrink-0 hover:scale-105 transition-all">
                   {post.author_name?.[0]?.toUpperCase() || '?'}
-                </div>
+                </a>
                 <div className="flex-1 min-w-0">
-                  <div className="font-bold text-gray-900 text-sm">{post.author_name || 'Traveler'}</div>
+                  <a href={profileUrl} className="font-bold text-gray-900 text-sm hover:text-green-700 transition-colors">
+                    {post.author_name || 'Traveler'}
+                  </a>
                   <div className="text-xs text-gray-400">
                     {post.location && (post.location + ' · ')}
                     {timeAgo}
@@ -274,8 +277,10 @@ export default function Home() {
 
               {post.caption && (
                 <div className="px-4 pt-3 pb-1">
-                  <span className="font-bold text-sm text-gray-900">{post.author_name} </span>
-                  <span className="text-sm text-gray-700">{post.caption}</span>
+                  <a href={profileUrl} className="font-bold text-sm text-gray-900 hover:text-green-700 transition-colors">
+                    {post.author_name}
+                  </a>
+                  <span className="text-sm text-gray-700"> {post.caption}</span>
                 </div>
               )}
 
