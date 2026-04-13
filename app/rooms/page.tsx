@@ -190,7 +190,7 @@ export default function Rooms() {
 
       <footer className="bg-gray-950 py-8 md:py-10 px-4 md:px-16 text-center">
         <div className="text-xl md:text-2xl font-extrabold text-green-400 mb-2">cucumber<span className="text-white opacity-40">.</span></div>
-        <div className="text-xs md:text-sm text-gray-600">© 2025 Cucumber Travel · Made with 🥒 in India</div>
+        <div className="text-xs md:text-sm text-gray-600">© 2026 Cucumber Travel · Made with love in India</div>
       </footer>
 
     </main>
