@@ -1,8 +1,8 @@
 'use client'
-import Navbar from '../../components/Navbar'
 import React from 'react'
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import Navbar from '../../components/Navbar'
 
 export default function PublicProfile({ params }: { params: Promise<{ username: string }> }) {
   const [currentUser, setCurrentUser] = useState<any>(null)
@@ -12,6 +12,7 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
   const [profileUser, setProfileUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [selectedPost, setSelectedPost] = useState<any>(null)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const { username } = React.use(params)
 
   const VIBE_COLORS: Record<string, string> = {
@@ -60,6 +61,36 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
     init()
   }, [username])
 
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !currentUser) return
+    setUploadingAvatar(true)
+
+    try {
+      const ext = file.name.split('.').pop()
+      const fileName = 'avatars/' + currentUser.id + '.' + ext
+      const { error: uploadError } = await supabase.storage
+        .from('image')
+        .upload(fileName, file, { upsert: true })
+
+      if (!uploadError) {
+        const { data: urlData } = supabase.storage
+          .from('image')
+          .getPublicUrl(fileName)
+
+        await supabase
+          .from('profiles')
+          .update({ avatar_url: urlData.publicUrl })
+          .eq('id', currentUser.id)
+
+        setProfileUser((prev: any) => ({ ...prev, avatar_url: urlData.publicUrl }))
+      }
+    } catch (err) {
+      console.error(err)
+    }
+    setUploadingAvatar(false)
+  }
+
   const avgRating = reviews.length > 0
     ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
     : null
@@ -83,6 +114,7 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
   }
 
   const rank = getRankBadge(tripsCount)
+  const isMyProfile = currentUser?.id === profileUser?.id
 
   if (loading) {
     return (
@@ -96,28 +128,67 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
   }
 
   return (
-    <main className="min-h-screen bg-green-50 font-sans">
+    <main className="min-h-screen bg-green-50 font-sans pb-20 md:pb-0">
 
-     <Navbar />
+      <Navbar />
 
-      <div className="pt-16 pb-16 max-w-2xl mx-auto">
+      <div className="pt-14 md:pt-16 max-w-2xl mx-auto">
 
+        {/* COVER */}
         <div className="bg-gradient-to-br from-green-600 to-green-400 h-32 md:h-40 relative overflow-hidden">
           <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
         </div>
 
+        {/* AVATAR + INFO */}
         <div className="px-4 md:px-6 pb-4 bg-white border-b border-green-100">
-          <div className="flex items-end justify-between -mt-10 mb-3">
-            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-green-400 to-green-700 flex items-center justify-center text-white text-2xl md:text-3xl font-bold border-4 border-white shadow-lg">
-              {username[0]?.toUpperCase()}
+          <div className="flex items-end justify-between -mt-12 mb-3">
+
+            {/* Avatar */}
+            <div className="relative">
+              {profileUser?.avatar_url ? (
+                <img
+                  src={profileUser.avatar_url}
+                  alt={username}
+                  className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+                />
+              ) : (
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-green-700 flex items-center justify-center text-white text-3xl font-bold border-4 border-white shadow-lg">
+                  {username[0]?.toUpperCase()}
+                </div>
+              )}
+
+              {/* Upload button — only on your own profile */}
+              {isMyProfile && (
+                <label className="absolute bottom-0 right-0 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-green-600 transition-all shadow-md border-2 border-white">
+                  {uploadingAvatar ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <span className="text-white text-sm">📷</span>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarUpload}
+                  />
+                </label>
+              )}
             </div>
-            {currentUser && currentUser.email !== profileUser?.email && (
+
+            {/* Action button */}
+            {!isMyProfile && currentUser && (
               <a href="/rooms" className="px-5 py-2 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white text-sm font-bold hover:scale-105 transition-all">
                 Invite to Room
               </a>
             )}
+            {isMyProfile && (
+              <a href="/dashboard" className="px-5 py-2 rounded-xl border border-green-200 text-green-700 text-sm font-bold hover:bg-green-50 transition-all">
+                Edit Profile
+              </a>
+            )}
           </div>
 
+          {/* Name + badges */}
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <h1 className="text-xl md:text-2xl font-extrabold text-gray-900">{username}</h1>
             <span className={'text-xs font-bold px-2.5 py-1 rounded-full border ' + rank.color}>
@@ -131,6 +202,7 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
           </div>
           <div className="text-sm text-gray-400 mb-4">@{username}</div>
 
+          {/* Stats */}
           <div className="flex gap-6">
             <div className="text-center">
               <div className="font-extrabold text-gray-900 text-lg">{posts.length}</div>
@@ -147,6 +219,7 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
           </div>
         </div>
 
+        {/* POSTS GRID */}
         <div className="bg-white mt-2 border-t border-b border-green-100">
           <div className="px-4 py-3 border-b border-green-50">
             <div className="font-bold text-gray-900 text-sm">Travel Memories</div>
@@ -189,6 +262,7 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
           )}
         </div>
 
+        {/* REVIEWS */}
         {reviews.length > 0 && (
           <div className="bg-white mt-2 border-t border-green-100">
             <div className="px-4 py-3 border-b border-green-50 flex items-center justify-between">
@@ -228,6 +302,7 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
 
       </div>
 
+      {/* POST DETAIL MODAL */}
       {selectedPost && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
