@@ -80,7 +80,7 @@ export default function Navbar() {
       await supabase.auth.signOut()
       window.location.href = '/login'
     }}
-    className="text-xs md:text-sm font-bold text-white bg-gradient-to-r from-red-400 to-red-500 px-3 md:px-5 py-1.5 md:py-2 rounded-xl hover:shadow-lg transition-all flex-shrink-0 cursor-pointer"
+    className="text-xs md:text-sm font-semibold text-gray-500 border border-gray-200 px-3 md:px-5 py-1.5 md:py-2 rounded-xl hover:bg-gray-50 transition-all flex-shrink-0 cursor-pointer"
   >
     Sign Out
   </button>
