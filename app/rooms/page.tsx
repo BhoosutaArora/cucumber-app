@@ -1,7 +1,8 @@
 'use client'
-
+import Navbar from '../components/Navbar'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import Navbar from '../components/Navbar'
 
 export default function Rooms() {
   const [rooms, setRooms] = useState<any[]>([])
@@ -58,30 +59,7 @@ export default function Rooms() {
   return (
     <main className="min-h-screen bg-white font-sans">
 
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 md:px-12 h-14 md:h-16 bg-white border-b border-green-100">
-        <a href="/" className="text-xl md:text-2xl font-extrabold text-green-700 tracking-tight">
-          cucumber<span className="text-green-400">.</span>
-        </a>
-        <div className="hidden md:flex items-center gap-8">
-          <a href="/" className="text-sm font-medium text-gray-500 hover:text-green-700 transition-colors">Home</a>
-          <a href="/rooms" className="text-sm font-bold text-green-700">Rooms</a>
-          <a href="/dashboard" className="text-sm font-medium text-gray-500 hover:text-green-700 transition-colors">Dashboard</a>
-        </div>
-        <div className="flex items-center gap-2">
-          {username ? (
-            <a href="/dashboard" className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-1.5 cursor-pointer">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-xs font-bold">
-                {username[0].toUpperCase()}
-              </div>
-              <span className="text-xs md:text-sm font-semibold text-green-700">{username}</span>
-            </a>
-          ) : (
-            <a href="/login" className="text-xs md:text-sm font-semibold text-green-700 border border-green-200 px-3 md:px-5 py-1.5 md:py-2 rounded-xl hover:bg-green-50 transition-all cursor-pointer">
-              Sign in
-            </a>
-          )}
-        </div>
-      </nav>
+      <Navbar />
 
       {/* HEADER */}
       <section className="pt-20 md:pt-28 pb-8 md:pb-12 px-4 md:px-16 bg-green-50 border-b border-green-100">

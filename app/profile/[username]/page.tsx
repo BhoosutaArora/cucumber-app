@@ -1,4 +1,5 @@
 'use client'
+import Navbar from '../../components/Navbar'
 import React from 'react'
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
@@ -97,22 +98,7 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
   return (
     <main className="min-h-screen bg-green-50 font-sans">
 
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 md:px-12 h-14 md:h-16 bg-white border-b border-green-100 shadow-sm">
-        <a href="/" className="text-xl md:text-2xl font-extrabold text-green-700 tracking-tight">
-          cucumber<span className="text-green-400">.</span>
-        </a>
-        <div className="flex items-center gap-2">
-          {currentUser ? (
-            <a href="/dashboard" className="text-xs md:text-sm font-semibold text-green-700 border border-green-200 px-3 py-1.5 rounded-xl hover:bg-green-50">
-              Dashboard
-            </a>
-          ) : (
-            <a href="/login" className="text-xs md:text-sm font-bold text-white bg-gradient-to-r from-green-400 to-green-500 px-4 py-1.5 rounded-xl">
-              Sign in
-            </a>
-          )}
-        </div>
-      </nav>
+     <Navbar />
 
       <div className="pt-16 pb-16 max-w-2xl mx-auto">
 

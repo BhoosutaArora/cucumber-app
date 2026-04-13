@@ -1,5 +1,5 @@
 'use client'
-
+import Navbar from '../components/Navbar'
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
@@ -234,21 +234,7 @@ export default function Dashboard() {
       <main className="min-h-screen bg-green-50 font-sans">
 
         {/* ── NAVBAR ── */}
-        <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 md:px-12 h-14 md:h-16 bg-white border-b border-green-100 shadow-sm">
-          <a href="/" className="text-xl md:text-2xl font-extrabold text-green-700 tracking-tight">cucumber<span className="text-green-400">.</span></a>
-          <div className="hidden md:flex items-center gap-8">
-            <a href="/" className="text-sm font-medium text-gray-500 hover:text-green-700 transition-colors">Home</a>
-            <a href="/rooms" className="text-sm font-medium text-gray-500 hover:text-green-700 transition-colors">Rooms</a>
-            <a href="/dashboard" className="text-sm font-bold text-green-700">Dashboard</a>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-1.5">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-xs font-bold">{userName[0].toUpperCase()}</div>
-              <span className="text-xs md:text-sm font-semibold text-green-700 hidden sm:block">{userName}</span>
-            </div>
-            <button onClick={handleSignOut} className="text-xs md:text-sm font-semibold text-gray-500 border border-gray-200 px-3 py-1.5 rounded-xl hover:bg-gray-50 transition-all cursor-pointer">Sign out</button>
-          </div>
-        </nav>
+       <Navbar />
 
         <div className="pt-16 md:pt-20 px-4 md:px-16 pb-10 md:pb-16 max-w-7xl mx-auto">
 
