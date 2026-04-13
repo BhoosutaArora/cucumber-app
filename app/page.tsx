@@ -295,26 +295,23 @@ export default function Home() {
                 </button>
               </div>
 
-              {/* Travel here button */}
-              {matchedRoom ? (
-                <div className="px-4 pb-4">
+            <div className="px-4 pb-4">
+                {matchedRoom ? (
                   
-                    href={`/rooms/${matchedRoom.id}`}
-  className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:shadow-lg hover:scale-[1.02] transition-all"
->
-  {"🥒 Travel here with Cucumber"}
-</a>
-                </div>
-              ) : (
-                <div className="px-4 pb-4">
+                    href={"/rooms/" + matchedRoom.id}
+                    className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:shadow-lg transition-all"
+                  >
+                    {"🥒 Travel here with Cucumber"}
+                  </a>
+                ) : (
                   
                     href="/rooms"
-  className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-green-200 text-green-700 font-bold text-sm hover:bg-green-50 transition-all"
->
-  {"🥒 Browse all trips"}
-</a>
-                </div>
-              )}
+                    className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-green-200 text-green-700 font-bold text-sm hover:bg-green-50 transition-all"
+                  >
+                    {"🥒 Browse all trips"}
+                  </a>
+                )}
+              </div>
 
             </div>
           )
