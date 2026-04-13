@@ -208,7 +208,7 @@ export default function Home() {
         </button>
       </section>
 
-      <section className="w-full max-w-xl mx-auto px-4 py-6 flex flex-col gap-6">
+      <section className="w-full max-w-2xl mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-2 gap-4">
 
         {loadingPosts && (
           <div className="text-center py-20">
