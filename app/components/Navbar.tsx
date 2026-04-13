@@ -25,12 +25,13 @@ export default function Navbar() {
     init()
   }, [])
 
-  const links = [
-    { href: '/', label: 'Home', icon: '🏠' },
-    { href: '/explore', label: 'Explore', icon: '🔍' },
-    { href: '/rooms', label: 'Trips', icon: '✈️' },
-    { href: '/chat', label: 'Chat', icon: '💬' },
-  ]
+ const links = [
+  { href: '/', label: 'Home', icon: '🏠' },
+  { href: '/explore', label: 'Explore', icon: '🔍' },
+  { href: '/rooms', label: 'Trips', icon: '✈️' },
+  { href: '/chat', label: 'Chat', icon: '💬' },
+  { href: '/dashboard', label: 'Dashboard', icon: '⚡' },
+]
 
   return (
     <>
