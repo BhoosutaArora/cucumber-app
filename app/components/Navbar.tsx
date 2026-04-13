@@ -74,9 +74,21 @@ export default function Navbar() {
               </a>
             )
           )}
-          <a href="/rooms" className="text-xs md:text-sm font-bold text-white bg-gradient-to-r from-green-400 to-green-500 px-3 md:px-5 py-1.5 md:py-2 rounded-xl hover:shadow-lg transition-all flex-shrink-0">
-            Find Trip
-          </a>
+         {username ? (
+  <button
+    onClick={async () => {
+      await supabase.auth.signOut()
+      window.location.href = '/login'
+    }}
+    className="text-xs md:text-sm font-bold text-white bg-gradient-to-r from-red-400 to-red-500 px-3 md:px-5 py-1.5 md:py-2 rounded-xl hover:shadow-lg transition-all flex-shrink-0 cursor-pointer"
+  >
+    Sign Out
+  </button>
+) : (
+  <a href="/rooms" className="text-xs md:text-sm font-bold text-white bg-gradient-to-r from-green-400 to-green-500 px-3 md:px-5 py-1.5 md:py-2 rounded-xl hover:shadow-lg transition-all flex-shrink-0">
+    Find Trip
+  </a>
+)}
         </div>
       </nav>
 
