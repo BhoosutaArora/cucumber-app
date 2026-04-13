@@ -292,7 +292,7 @@ export default function Home() {
               <div className="px-4 pb-4">
                 {matchedRoom ? (
                   
-                    href={'/rooms/' + matchedRoom.id}
+                    href={"/rooms/" + matchedRoom.id}
                     className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:shadow-lg transition-all"
                   >
                     Travel here with Cucumber
