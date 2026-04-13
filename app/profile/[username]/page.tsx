@@ -13,12 +13,18 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
   const [selectedPost, setSelectedPost] = useState<any>(null)
   const { username } = React.use(params)
 
+  const VIBE_COLORS: Record<string, string> = {
+    Adventure: 'bg-orange-100 text-orange-600 border-orange-200',
+    Chill: 'bg-blue-100 text-blue-600 border-blue-200',
+    Cultural: 'bg-purple-100 text-purple-600 border-purple-200',
+    Explorer: 'bg-green-100 text-green-600 border-green-200',
+  }
+
   useEffect(() => {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser()
       setCurrentUser(user)
 
-      // Get profile from profiles table by username
       const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
@@ -26,7 +32,6 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
         .single()
       setProfileUser(profileData)
 
-      // Get reviews
       const { data: reviewData } = await supabase
         .from('reviews')
         .select('*')
@@ -34,7 +39,6 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
         .order('created_at', { ascending: false })
       setReviews(reviewData || [])
 
-      // Get posts by this user
       const { data: postData } = await supabase
         .from('posts')
         .select('*')
@@ -42,7 +46,6 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
         .order('created_at', { ascending: false })
       setPosts(postData || [])
 
-      // Get trips count from room_members
       if (profileData?.id) {
         const { data: memberData } = await supabase
           .from('room_members')
@@ -60,7 +63,6 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
     ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
     : null
 
-  // Get dominant vibe from posts
   function getDominantVibe() {
     if (posts.length === 0) return null
     const vibeCounts: Record<string, number> = {}
@@ -72,14 +74,7 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
 
   const dominantVibe = getDominantVibe()
 
-  const VIBE_COLORS: Record<string, string> = {
-    Adventure: 'bg-orange-100 text-orange-600 border-orange-200',
-    Chill: 'bg-blue-100 text-blue-600 border-blue-200',
-    Cultural: 'bg-purple-100 text-purple-600 border-purple-200',
-    Explorer: 'bg-green-100 text-green-600 border-green-200',
-  }
-
-  const getRankBadge = (trips: number) => {
+  function getRankBadge(trips: number) {
     if (trips >= 20) return { label: 'Legend', emoji: '🏆', color: 'text-yellow-600 bg-yellow-50 border-yellow-200' }
     if (trips >= 10) return { label: 'Voyager', emoji: '🌍', color: 'text-purple-600 bg-purple-50 border-purple-200' }
     if (trips >= 5) return { label: 'Explorer', emoji: '🧭', color: 'text-blue-600 bg-blue-50 border-blue-200' }
@@ -102,7 +97,6 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
   return (
     <main className="min-h-screen bg-green-50 font-sans">
 
-      {/* NAVBAR */}
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 md:px-12 h-14 md:h-16 bg-white border-b border-green-100 shadow-sm">
         <a href="/" className="text-xl md:text-2xl font-extrabold text-green-700 tracking-tight">
           cucumber<span className="text-green-400">.</span>
@@ -122,12 +116,10 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
 
       <div className="pt-16 pb-16 max-w-2xl mx-auto">
 
-        {/* COVER */}
         <div className="bg-gradient-to-br from-green-600 to-green-400 h-32 md:h-40 relative overflow-hidden">
           <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
         </div>
 
-        {/* AVATAR + NAME */}
         <div className="px-4 md:px-6 pb-4 bg-white border-b border-green-100">
           <div className="flex items-end justify-between -mt-10 mb-3">
             <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-green-400 to-green-700 flex items-center justify-center text-white text-2xl md:text-3xl font-bold border-4 border-white shadow-lg">
@@ -153,7 +145,6 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
           </div>
           <div className="text-sm text-gray-400 mb-4">@{username}</div>
 
-          {/* Stats row */}
           <div className="flex gap-6">
             <div className="text-center">
               <div className="font-extrabold text-gray-900 text-lg">{posts.length}</div>
@@ -170,7 +161,6 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
           </div>
         </div>
 
-        {/* POSTS GRID */}
         <div className="bg-white mt-2 border-t border-b border-green-100">
           <div className="px-4 py-3 border-b border-green-50">
             <div className="font-bold text-gray-900 text-sm">Travel Memories</div>
@@ -203,7 +193,7 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
                   )}
                   {post.is_verified_trip && (
                     <div className="absolute top-1 right-1 bg-green-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
-                      ✓
+                      V
                     </div>
                   )}
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all" />
@@ -213,7 +203,6 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
           )}
         </div>
 
-        {/* REVIEWS */}
         {reviews.length > 0 && (
           <div className="bg-white mt-2 border-t border-green-100">
             <div className="px-4 py-3 border-b border-green-50 flex items-center justify-between">
@@ -253,7 +242,6 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
 
       </div>
 
-      {/* POST DETAIL MODAL */}
       {selectedPost && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
@@ -269,15 +257,15 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
               </div>
             )}
             <div className="p-4">
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
                 {selectedPost.location && (
                   <span className="text-xs text-gray-400">📍 {selectedPost.location}</span>
                 )}
                 {selectedPost.is_verified_trip && (
-                  <span className="text-xs font-bold bg-green-500 text-white px-2 py-0.5 rounded-full">✓ Verified Trip</span>
+                  <span className="text-xs font-bold bg-green-500 text-white px-2 py-0.5 rounded-full">Verified Trip</span>
                 )}
                 {selectedPost.vibe && (
-                  <span className={'text-xs font-bold px-2 py-0.5 rounded-full ' + (VIBE_COLORS[selectedPost.vibe] || 'bg-gray-100 text-gray-500')}>
+                  <span className={'text-xs font-bold px-2 py-0.5 rounded-full border ' + (VIBE_COLORS[selectedPost.vibe] || 'bg-gray-100 text-gray-500 border-gray-200')}>
                     {selectedPost.vibe}
                   </span>
                 )}
@@ -285,7 +273,7 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
               {selectedPost.caption && (
                 <p className="text-sm text-gray-700 mb-3">{selectedPost.caption}</p>
               )}
-              
+              <a
                 href="/rooms"
                 className="block w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm text-center hover:shadow-lg transition-all"
               >
