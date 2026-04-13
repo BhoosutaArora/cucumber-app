@@ -192,7 +192,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="w-full px-4 flex justify-center pb-3 sticky top-14 md:top-16 z-40 bg-white border-b border-green-50 py-3">
+      <section className="w-full px-4 flex justify-center sticky top-14 md:top-16 z-40 bg-white border-b border-green-50 py-3">
         <button
           onClick={() => setShowPostModal(true)}
           className="flex items-center gap-3 bg-green-50 border-2 border-green-200 rounded-2xl px-6 py-3 hover:bg-green-100 hover:border-green-400 transition-all cursor-pointer group w-full max-w-xl"
@@ -246,7 +246,7 @@ export default function Home() {
                 <div className="flex-1 min-w-0">
                   <div className="font-bold text-gray-900 text-sm">{post.author_name || 'Traveler'}</div>
                   <div className="text-xs text-gray-400">
-                    {post.location && ('📍 ' + post.location + ' · ')}
+                    {post.location && (post.location + ' · ')}
                     {timeAgo}
                   </div>
                 </div>
@@ -291,14 +291,14 @@ export default function Home() {
 
               <div className="px-4 pb-4">
                 {matchedRoom ? (
-                  
-                    href={"/rooms/" + matchedRoom.id}
+                  <a
+                    href={'/rooms/' + String(matchedRoom.id)}
                     className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:shadow-lg transition-all"
                   >
                     Travel here with Cucumber
                   </a>
                 ) : (
-                  
+                  <a
                     href="/rooms"
                     className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-green-200 text-green-700 font-bold text-sm hover:bg-green-50 transition-all"
                   >
@@ -381,10 +381,10 @@ export default function Home() {
                   <div className="text-gray-400 text-sm mt-1">Your travel story is now live.</div>
                 </div>
               ) : (
-                <>
+                <div>
                   <div
                     onClick={() => document.getElementById('post-image-input')?.click()}
-                    className="w-full h-48 rounded-2xl border-2 border-dashed border-green-200 flex items-center justify-center cursor-pointer hover:border-green-400 transition-all overflow-hidden bg-green-50"
+                    className="w-full h-48 rounded-2xl border-2 border-dashed border-green-200 flex items-center justify-center cursor-pointer hover:border-green-400 transition-all overflow-hidden bg-green-50 mb-4"
                   >
                     {postImagePreview ? (
                       <img src={postImagePreview} className="w-full h-full object-cover" alt="preview" />
@@ -408,17 +408,17 @@ export default function Home() {
                     onChange={e => setPostCaption(e.target.value)}
                     placeholder="Tell us about this place... What did it feel like?"
                     rows={3}
-                    className="w-full border border-green-200 rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:border-green-400 text-gray-800 placeholder-gray-300"
+                    className="w-full border border-green-200 rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:border-green-400 text-gray-800 placeholder-gray-300 mb-3"
                   />
 
                   <input
                     value={postLocation}
                     onChange={e => setPostLocation(e.target.value)}
                     placeholder="Where is this? (e.g. Shimla, Himachal Pradesh)"
-                    className="w-full border border-green-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-400 text-gray-800 placeholder-gray-300"
+                    className="w-full border border-green-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-400 text-gray-800 placeholder-gray-300 mb-3"
                   />
 
-                  <div>
+                  <div className="mb-4">
                     <div className="text-xs font-semibold text-gray-500 mb-2">What is the vibe?</div>
                     <div className="flex gap-2 flex-wrap">
                       {['Adventure', 'Chill', 'Cultural', 'Explorer'].map(v => (
@@ -440,7 +440,7 @@ export default function Home() {
                   >
                     {posting ? 'Sharing...' : 'Share Memory'}
                   </button>
-                </>
+                </div>
               )}
             </div>
 
