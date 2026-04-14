@@ -47,11 +47,15 @@ export default function JoinRoom() {
     console.log('Joining room:', id, 'User:', user?.id)
 
     const { data, error } = await supabase.from('room_members').insert({
-      room_id: id,
-      user_id: user.id,
-      status: 'pending',
-      joined_at: new Date().toISOString(),
-    })
+  room_id: id,
+  user_id: user.id,
+  status: 'pending',
+  joined_at: new Date().toISOString(),
+})
+
+if (!error) {
+  await supabase.rpc('increment_seats', { room_id: parseInt(id) })
+}
 
     console.log('Result:', data, 'Error:', error)
 
