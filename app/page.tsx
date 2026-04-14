@@ -1,5 +1,5 @@
 'use client'
-
+import Navbar from './components/Navbar'
 import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
 
@@ -239,33 +239,7 @@ export default function Home() {
       )}
 
       {/* NAVBAR */}
-      <nav className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 md:px-12 h-14 md:h-16 bg-white border-b border-green-100 shadow-sm">
-        <div className="text-xl md:text-2xl font-extrabold text-green-700 tracking-tight">
-          cucumber<span className="text-green-400">.</span>
-        </div>
-        <div className="hidden md:flex items-center gap-8">
-          <a href="/rooms" className="text-sm font-medium text-gray-500 hover:text-green-700 transition-colors">Trips</a>
-          <a href="/explore" className="text-sm font-medium text-gray-500 hover:text-green-700 transition-colors">Explore</a>
-          <a href="/dashboard" className="text-sm font-medium text-gray-500 hover:text-green-700 transition-colors">Dashboard</a>
-        </div>
-        <div className="flex items-center gap-2 md:gap-3">
-          {username ? (
-            <a href="/dashboard" className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-1.5">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-xs font-bold">
-                {username[0].toUpperCase()}
-              </div>
-              <span className="text-xs md:text-sm font-semibold text-green-700">{username}</span>
-            </a>
-          ) : (
-            <a href="/login" className="text-xs md:text-sm font-semibold text-green-700 border border-green-200 px-3 md:px-5 py-1.5 md:py-2 rounded-xl hover:bg-green-50 transition-all">
-              Sign in
-            </a>
-          )}
-          <a href="/rooms" className="text-xs md:text-sm font-bold text-white bg-gradient-to-r from-green-400 to-green-500 px-3 md:px-5 py-1.5 md:py-2 rounded-xl hover:shadow-lg transition-all">
-            Find Trip
-          </a>
-        </div>
-      </nav>
+     <Navbar />
 
       <section className="w-full flex flex-col items-center justify-center relative overflow-hidden px-5 md:px-8 pt-24 pb-10">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_100%_70%_at_50%_0%,#C8F0C0,transparent_65%)] pointer-events-none" />
