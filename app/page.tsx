@@ -1,5 +1,5 @@
 'use client'
-import Navbar from './components/Navbar'
+
 import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
 
@@ -17,6 +17,10 @@ export default function Home() {
   const [rooms, setRooms] = useState<any[]>([])
   const [loadingPosts, setLoadingPosts] = useState(true)
   const [showPostModal, setShowPostModal] = useState(false)
+
+  // Invite notification
+  const [pendingInvite, setPendingInvite] = useState<any>(null)
+  const [joiningRoom, setJoiningRoom] = useState(false)
 
   const [postCaption, setPostCaption] = useState('')
   const [postLocation, setPostLocation] = useState('')
@@ -37,6 +41,18 @@ export default function Home() {
           .eq('id', user.id)
           .single()
         setUsername(profile?.username || user.email?.split('@')[0] || 'Traveler')
+
+        // Check for pending invites
+        const { data: invite } = await supabase
+          .from('room_invites')
+          .select('*')
+          .eq('invitee_id', user.id)
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single()
+
+        if (invite) setPendingInvite(invite)
       }
 
       const { data: roomData } = await supabase
@@ -58,6 +74,51 @@ export default function Home() {
       .order('created_at', { ascending: false })
     setPosts(data || [])
     setLoadingPosts(false)
+  }
+
+  async function handleAcceptInvite() {
+    if (!pendingInvite || !userId) return
+    setJoiningRoom(true)
+
+    // Check if already a member
+    const { data: existing } = await supabase
+      .from('room_members')
+      .select('id')
+      .eq('room_id', pendingInvite.room_id)
+      .eq('user_id', userId)
+      .single()
+
+    if (!existing) {
+      // Join the room
+      await supabase.from('room_members').insert({
+        room_id: pendingInvite.room_id,
+        user_id: userId,
+        status: 'active',
+        is_ready: false,
+      })
+
+      // Update room seats
+      await supabase.rpc('increment_seats', { room_id: pendingInvite.room_id })
+    }
+
+    // Mark invite as accepted
+    await supabase
+      .from('room_invites')
+      .update({ status: 'accepted' })
+      .eq('id', pendingInvite.id)
+
+    setJoiningRoom(false)
+    setPendingInvite(null)
+    window.location.href = '/rooms/' + pendingInvite.room_id + '/room'
+  }
+
+  async function handleDeclineInvite() {
+    if (!pendingInvite) return
+    await supabase
+      .from('room_invites')
+      .update({ status: 'declined' })
+      .eq('id', pendingInvite.id)
+    setPendingInvite(null)
   }
 
   function getRoomForDestination(location: string) {
@@ -142,7 +203,69 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-white font-sans">
 
-      <Navbar />
+      {/* INVITE POPUP */}
+      {pendingInvite && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+          <div className="bg-white rounded-3xl overflow-hidden max-w-sm w-full shadow-2xl">
+            <div className="bg-gradient-to-br from-green-600 to-green-400 px-6 py-5 text-center">
+              <div className="text-4xl mb-2">🥒</div>
+              <h2 className="text-white font-extrabold text-lg">You have a trip invite!</h2>
+              <p className="text-green-100 text-sm mt-1">Someone wants to travel with you!</p>
+            </div>
+            <div className="p-6">
+              <div className="bg-green-50 rounded-2xl p-4 mb-5 border border-green-100">
+                <div className="text-xs text-gray-400 mb-1">Invited by</div>
+                <div className="font-bold text-gray-900 text-base">{pendingInvite.inviter_name}</div>
+                <div className="text-xs text-gray-400 mt-2 mb-1">Trip</div>
+                <div className="font-extrabold text-green-700 text-lg">{pendingInvite.room_name}</div>
+              </div>
+
+              <button
+                onClick={handleAcceptInvite}
+                disabled={joiningRoom}
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:shadow-lg transition-all disabled:opacity-50 cursor-pointer mb-2"
+              >
+                {joiningRoom ? 'Joining...' : 'Accept & Join Room'}
+              </button>
+              <button
+                onClick={handleDeclineInvite}
+                className="w-full py-2.5 rounded-2xl border border-gray-200 text-gray-500 font-semibold text-sm cursor-pointer hover:bg-gray-50 transition-all"
+              >
+                Decline
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* NAVBAR */}
+      <nav className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 md:px-12 h-14 md:h-16 bg-white border-b border-green-100 shadow-sm">
+        <div className="text-xl md:text-2xl font-extrabold text-green-700 tracking-tight">
+          cucumber<span className="text-green-400">.</span>
+        </div>
+        <div className="hidden md:flex items-center gap-8">
+          <a href="/rooms" className="text-sm font-medium text-gray-500 hover:text-green-700 transition-colors">Trips</a>
+          <a href="/explore" className="text-sm font-medium text-gray-500 hover:text-green-700 transition-colors">Explore</a>
+          <a href="/dashboard" className="text-sm font-medium text-gray-500 hover:text-green-700 transition-colors">Dashboard</a>
+        </div>
+        <div className="flex items-center gap-2 md:gap-3">
+          {username ? (
+            <a href="/dashboard" className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-1.5">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-xs font-bold">
+                {username[0].toUpperCase()}
+              </div>
+              <span className="text-xs md:text-sm font-semibold text-green-700">{username}</span>
+            </a>
+          ) : (
+            <a href="/login" className="text-xs md:text-sm font-semibold text-green-700 border border-green-200 px-3 md:px-5 py-1.5 md:py-2 rounded-xl hover:bg-green-50 transition-all">
+              Sign in
+            </a>
+          )}
+          <a href="/rooms" className="text-xs md:text-sm font-bold text-white bg-gradient-to-r from-green-400 to-green-500 px-3 md:px-5 py-1.5 md:py-2 rounded-xl hover:shadow-lg transition-all">
+            Find Trip
+          </a>
+        </div>
+      </nav>
 
       <section className="w-full flex flex-col items-center justify-center relative overflow-hidden px-5 md:px-8 pt-24 pb-10">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_100%_70%_at_50%_0%,#C8F0C0,transparent_65%)] pointer-events-none" />
@@ -185,14 +308,14 @@ export default function Home() {
       <section className="w-full max-w-2xl mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-2 gap-4">
 
         {loadingPosts && (
-          <div className="text-center py-20">
+          <div className="col-span-2 text-center py-20">
             <div className="text-5xl mb-4">🥒</div>
             <div className="text-green-700 font-bold">Loading travel memories...</div>
           </div>
         )}
 
         {!loadingPosts && posts.length === 0 && (
-          <div className="text-center py-20">
+          <div className="col-span-2 text-center py-20">
             <div className="text-5xl mb-4">📸</div>
             <div className="font-bold text-gray-700 text-xl mb-2">No posts yet!</div>
             <div className="text-gray-400 mb-6">Be the first to share a travel memory.</div>
@@ -214,7 +337,6 @@ export default function Home() {
 
           return (
             <div key={post.id} className="bg-white rounded-2xl border border-green-100 overflow-hidden shadow-sm hover:shadow-md transition-all">
-
               <div className="flex items-center gap-3 p-4 pb-3">
                 <a href={profileUrl} className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold flex-shrink-0 hover:scale-105 transition-all">
                   {post.author_name?.[0]?.toUpperCase() || '?'}
@@ -235,18 +357,14 @@ export default function Home() {
                 )}
                 {post.is_verified_trip && (
                   <span className="text-xs font-bold bg-green-500 text-white px-2.5 py-1 rounded-full flex-shrink-0">
-                    Verified Trip
+                    Verified
                   </span>
                 )}
               </div>
 
               {post.img_url && (
                 <div className="w-full aspect-square overflow-hidden">
-                  <img
-                    src={post.img_url}
-                    alt={post.caption}
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={post.img_url} alt={post.caption} className="w-full h-full object-cover" />
                 </div>
               )}
 
@@ -286,7 +404,6 @@ export default function Home() {
                   </a>
                 )}
               </div>
-
             </div>
           )
         })}
@@ -342,17 +459,10 @@ export default function Home() {
       {showPostModal && (
         <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/50 px-0 md:px-4">
           <div className="bg-white w-full md:max-w-lg rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl">
-
             <div className="flex items-center justify-between px-5 py-4 border-b border-green-100">
               <div className="font-bold text-gray-900">Share a Travel Memory</div>
-              <button
-                onClick={() => { setShowPostModal(false); setPostImagePreview('') }}
-                className="text-gray-400 hover:text-gray-700 text-2xl font-light cursor-pointer"
-              >
-                x
-              </button>
+              <button onClick={() => { setShowPostModal(false); setPostImagePreview('') }} className="text-gray-400 hover:text-gray-700 text-2xl font-light cursor-pointer">x</button>
             </div>
-
             <div className="p-5 flex flex-col gap-4 max-h-[80vh] overflow-y-auto">
               {postSuccess ? (
                 <div className="text-center py-10">
@@ -362,10 +472,7 @@ export default function Home() {
                 </div>
               ) : (
                 <div>
-                  <div
-                    onClick={() => document.getElementById('post-image-input')?.click()}
-                    className="w-full h-48 rounded-2xl border-2 border-dashed border-green-200 flex items-center justify-center cursor-pointer hover:border-green-400 transition-all overflow-hidden bg-green-50 mb-4"
-                  >
+                  <div onClick={() => document.getElementById('post-image-input')?.click()} className="w-full h-48 rounded-2xl border-2 border-dashed border-green-200 flex items-center justify-center cursor-pointer hover:border-green-400 transition-all overflow-hidden bg-green-50 mb-4">
                     {postImagePreview ? (
                       <img src={postImagePreview} className="w-full h-full object-cover" alt="preview" />
                     ) : (
@@ -375,55 +482,25 @@ export default function Home() {
                       </div>
                     )}
                   </div>
-                  <input
-                    id="post-image-input"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleImageChange}
-                  />
-
-                  <textarea
-                    value={postCaption}
-                    onChange={e => setPostCaption(e.target.value)}
-                    placeholder="Tell us about this place... What did it feel like?"
-                    rows={3}
-                    className="w-full border border-green-200 rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:border-green-400 text-gray-800 placeholder-gray-300 mb-3"
-                  />
-
-                  <input
-                    value={postLocation}
-                    onChange={e => setPostLocation(e.target.value)}
-                    placeholder="Where is this? (e.g. Shimla, Himachal Pradesh)"
-                    className="w-full border border-green-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-400 text-gray-800 placeholder-gray-300 mb-3"
-                  />
-
+                  <input id="post-image-input" type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                  <textarea value={postCaption} onChange={e => setPostCaption(e.target.value)} placeholder="Tell us about this place..." rows={3} className="w-full border border-green-200 rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:border-green-400 text-gray-800 placeholder-gray-300 mb-3" />
+                  <input value={postLocation} onChange={e => setPostLocation(e.target.value)} placeholder="Where is this? (e.g. Shimla, Himachal Pradesh)" className="w-full border border-green-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-400 text-gray-800 placeholder-gray-300 mb-3" />
                   <div className="mb-4">
                     <div className="text-xs font-semibold text-gray-500 mb-2">What is the vibe?</div>
                     <div className="flex gap-2 flex-wrap">
                       {['Adventure', 'Chill', 'Cultural', 'Explorer'].map(v => (
-                        <button
-                          key={v}
-                          onClick={() => setPostVibe(v)}
-                          className={'px-4 py-1.5 rounded-full text-xs font-bold border transition-all cursor-pointer ' + (postVibe === v ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-500 border-gray-200 hover:border-green-300')}
-                        >
+                        <button key={v} onClick={() => setPostVibe(v)} className={'px-4 py-1.5 rounded-full text-xs font-bold border transition-all cursor-pointer ' + (postVibe === v ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-500 border-gray-200 hover:border-green-300')}>
                           {v}
                         </button>
                       ))}
                     </div>
                   </div>
-
-                  <button
-                    onClick={handlePost}
-                    disabled={posting || !postCaption.trim() || !postLocation.trim()}
-                    className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                  >
+                  <button onClick={handlePost} disabled={posting || !postCaption.trim() || !postLocation.trim()} className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:shadow-lg transition-all disabled:opacity-50 cursor-pointer">
                     {posting ? 'Sharing...' : 'Share Memory'}
                   </button>
                 </div>
               )}
             </div>
-
           </div>
         </div>
       )}

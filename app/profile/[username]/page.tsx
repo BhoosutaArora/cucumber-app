@@ -13,6 +13,12 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
   const [loading, setLoading] = useState(true)
   const [selectedPost, setSelectedPost] = useState<any>(null)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const [showInviteModal, setShowInviteModal] = useState(false)
+  const [openRooms, setOpenRooms] = useState<any[]>([])
+  const [selectedRoom, setSelectedRoom] = useState<any>(null)
+  const [inviting, setInviting] = useState(false)
+  const [inviteSent, setInviteSent] = useState(false)
+  const [currentUsername, setCurrentUsername] = useState('')
   const { username } = React.use(params)
 
   const VIBE_COLORS: Record<string, string> = {
@@ -26,6 +32,15 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
     async function init() {
       const { data: { user } } = await supabase.auth.getUser()
       setCurrentUser(user)
+
+      if (user) {
+        const { data: myProfile } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('id', user.id)
+          .single()
+        setCurrentUsername(myProfile?.username || '')
+      }
 
       const { data: profileData } = await supabase
         .from('profiles')
@@ -55,6 +70,12 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
           .eq('user_id', profileData.id)
         setTripsCount(memberData?.length || 0)
       }
+
+      const { data: roomData } = await supabase
+        .from('Rooms')
+        .select('*')
+        .eq('status', 'Open')
+      setOpenRooms(roomData || [])
 
       setLoading(false)
     }
@@ -89,6 +110,28 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
       console.error(err)
     }
     setUploadingAvatar(false)
+  }
+
+  async function handleSendInvite() {
+    if (!selectedRoom || !currentUser || !profileUser) return
+    setInviting(true)
+
+    await supabase.from('room_invites').insert({
+      room_id: selectedRoom.id,
+      inviter_id: currentUser.id,
+      invitee_id: profileUser.id,
+      inviter_name: currentUsername,
+      room_name: selectedRoom.name,
+      status: 'pending',
+    })
+
+    setInviting(false)
+    setInviteSent(true)
+    setTimeout(() => {
+      setShowInviteModal(false)
+      setInviteSent(false)
+      setSelectedRoom(null)
+    }, 2000)
   }
 
   const avgRating = reviews.length > 0
@@ -132,18 +175,84 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
 
       <Navbar />
 
+      {/* INVITE MODAL */}
+      {showInviteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+          <div className="bg-white rounded-3xl overflow-hidden max-w-sm w-full shadow-2xl">
+            <div className="bg-gradient-to-br from-green-600 to-green-400 px-6 py-5 text-center">
+              <div className="text-3xl mb-2">🥒</div>
+              <h2 className="text-white font-extrabold text-lg">Invite {username} to a Trip!</h2>
+              <p className="text-green-100 text-xs mt-1">Choose which room to invite them to</p>
+            </div>
+
+            <div className="p-5">
+              {inviteSent ? (
+                <div className="text-center py-6">
+                  <div className="text-5xl mb-3">🎉</div>
+                  <div className="font-bold text-green-700 text-lg">Invite sent!</div>
+                  <div className="text-gray-400 text-sm mt-1">{username} will see your invite when they open the app!</div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex flex-col gap-3 mb-4">
+                    {openRooms.length === 0 ? (
+                      <div className="text-center text-gray-400 text-sm py-4">No open rooms right now</div>
+                    ) : (
+                      openRooms.map(room => (
+                        <div
+                          key={room.id}
+                          onClick={() => setSelectedRoom(room)}
+                          className={'flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ' + (selectedRoom?.id === room.id ? 'border-green-500 bg-green-50' : 'border-gray-100 hover:border-green-200')}
+                        >
+                          <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0">
+                            {room.image_url ? (
+                              <img src={room.image_url} alt={room.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-green-400 to-green-600" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-bold text-gray-900 text-sm truncate">{room.name}</div>
+                            <div className="text-xs text-gray-400">📍 {room.destination} · {room.dates}</div>
+                          </div>
+                          {selectedRoom?.id === room.id && (
+                            <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                              <span className="text-white text-xs">✓</span>
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  <button
+                    onClick={handleSendInvite}
+                    disabled={!selectedRoom || inviting}
+                    className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm hover:shadow-lg transition-all disabled:opacity-50 cursor-pointer"
+                  >
+                    {inviting ? 'Sending...' : 'Send Invite'}
+                  </button>
+                  <button
+                    onClick={() => { setShowInviteModal(false); setSelectedRoom(null) }}
+                    className="w-full py-2.5 mt-2 text-sm text-gray-400 cursor-pointer hover:text-gray-600"
+                  >
+                    Cancel
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="pt-14 md:pt-16 max-w-2xl mx-auto">
 
-        {/* COVER */}
         <div className="bg-gradient-to-br from-green-600 to-green-400 h-32 md:h-40 relative overflow-hidden">
           <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
         </div>
 
-        {/* AVATAR + INFO */}
         <div className="px-4 md:px-6 pb-4 bg-white border-b border-green-100">
           <div className="flex items-end justify-between -mt-12 mb-3">
-
-            {/* Avatar */}
             <div className="relative">
               {profileUser?.avatar_url ? (
                 <img
@@ -156,8 +265,6 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
                   {username[0]?.toUpperCase()}
                 </div>
               )}
-
-              {/* Upload button — only on your own profile */}
               {isMyProfile && (
                 <label className="absolute bottom-0 right-0 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-green-600 transition-all shadow-md border-2 border-white">
                   {uploadingAvatar ? (
@@ -165,30 +272,28 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
                   ) : (
                     <span className="text-white text-sm">📷</span>
                   )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleAvatarUpload}
-                  />
+                  <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
                 </label>
               )}
             </div>
 
-            {/* Action button */}
-            {!isMyProfile && currentUser && (
-              <a href="/rooms" className="px-5 py-2 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white text-sm font-bold hover:scale-105 transition-all">
-                Invite to Room
-              </a>
-            )}
-            {isMyProfile && (
-              <a href="/dashboard" className="px-5 py-2 rounded-xl border border-green-200 text-green-700 text-sm font-bold hover:bg-green-50 transition-all">
-                Edit Profile
-              </a>
-            )}
+            <div className="flex gap-2">
+              {!isMyProfile && currentUser && (
+                <button
+                  onClick={() => setShowInviteModal(true)}
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white text-sm font-bold hover:scale-105 transition-all cursor-pointer"
+                >
+                  Invite to Room
+                </button>
+              )}
+              {isMyProfile && (
+                <a href="/dashboard" className="px-5 py-2 rounded-xl border border-green-200 text-green-700 text-sm font-bold hover:bg-green-50 transition-all">
+                  Edit Profile
+                </a>
+              )}
+            </div>
           </div>
 
-          {/* Name + badges */}
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <h1 className="text-xl md:text-2xl font-extrabold text-gray-900">{username}</h1>
             <span className={'text-xs font-bold px-2.5 py-1 rounded-full border ' + rank.color}>
@@ -202,7 +307,6 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
           </div>
           <div className="text-sm text-gray-400 mb-4">@{username}</div>
 
-          {/* Stats */}
           <div className="flex gap-6">
             <div className="text-center">
               <div className="font-extrabold text-gray-900 text-lg">{posts.length}</div>
@@ -219,7 +323,6 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
           </div>
         </div>
 
-        {/* POSTS GRID */}
         <div className="bg-white mt-2 border-t border-b border-green-100">
           <div className="px-4 py-3 border-b border-green-50">
             <div className="font-bold text-gray-900 text-sm">Travel Memories</div>
@@ -240,20 +343,14 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
                   className="aspect-square overflow-hidden cursor-pointer relative group"
                 >
                   {post.img_url ? (
-                    <img
-                      src={post.img_url}
-                      alt={post.caption}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+                    <img src={post.img_url} alt={post.caption} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   ) : (
                     <div className="w-full h-full bg-green-100 flex items-center justify-center">
                       <span className="text-2xl">📍</span>
                     </div>
                   )}
                   {post.is_verified_trip && (
-                    <div className="absolute top-1 right-1 bg-green-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
-                      V
-                    </div>
+                    <div className="absolute top-1 right-1 bg-green-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">V</div>
                   )}
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all" />
                 </div>
@@ -262,14 +359,11 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
           )}
         </div>
 
-        {/* REVIEWS */}
         {reviews.length > 0 && (
           <div className="bg-white mt-2 border-t border-green-100">
             <div className="px-4 py-3 border-b border-green-50 flex items-center justify-between">
               <div className="font-bold text-gray-900 text-sm">Reviews ({reviews.length})</div>
-              {avgRating && (
-                <div className="text-sm font-bold text-green-700">{avgRating} ⭐</div>
-              )}
+              {avgRating && <div className="text-sm font-bold text-green-700">{avgRating} ⭐</div>}
             </div>
             <div className="divide-y divide-green-50">
               {reviews.map((review) => (
@@ -302,16 +396,9 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
 
       </div>
 
-      {/* POST DETAIL MODAL */}
       {selectedPost && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
-          onClick={() => setSelectedPost(null)}
-        >
-          <div
-            className="bg-white rounded-2xl overflow-hidden max-w-sm w-full shadow-2xl"
-            onClick={e => e.stopPropagation()}
-          >
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4" onClick={() => setSelectedPost(null)}>
+          <div className="bg-white rounded-2xl overflow-hidden max-w-sm w-full shadow-2xl" onClick={e => e.stopPropagation()}>
             {selectedPost.img_url && (
               <div className="aspect-square overflow-hidden">
                 <img src={selectedPost.img_url} alt={selectedPost.caption} className="w-full h-full object-cover" />
@@ -319,25 +406,16 @@ export default function PublicProfile({ params }: { params: Promise<{ username: 
             )}
             <div className="p-4">
               <div className="flex items-center gap-2 mb-2 flex-wrap">
-                {selectedPost.location && (
-                  <span className="text-xs text-gray-400">📍 {selectedPost.location}</span>
-                )}
-                {selectedPost.is_verified_trip && (
-                  <span className="text-xs font-bold bg-green-500 text-white px-2 py-0.5 rounded-full">Verified Trip</span>
-                )}
+                {selectedPost.location && <span className="text-xs text-gray-400">📍 {selectedPost.location}</span>}
+                {selectedPost.is_verified_trip && <span className="text-xs font-bold bg-green-500 text-white px-2 py-0.5 rounded-full">Verified Trip</span>}
                 {selectedPost.vibe && (
                   <span className={'text-xs font-bold px-2 py-0.5 rounded-full border ' + (VIBE_COLORS[selectedPost.vibe] || 'bg-gray-100 text-gray-500 border-gray-200')}>
                     {selectedPost.vibe}
                   </span>
                 )}
               </div>
-              {selectedPost.caption && (
-                <p className="text-sm text-gray-700 mb-3">{selectedPost.caption}</p>
-              )}
-              <a
-                href="/rooms"
-                className="block w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm text-center hover:shadow-lg transition-all"
-              >
+              {selectedPost.caption && <p className="text-sm text-gray-700 mb-3">{selectedPost.caption}</p>}
+              <a href="/rooms" className="block w-full py-3 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm text-center hover:shadow-lg transition-all">
                 Travel here with Cucumber
               </a>
             </div>
