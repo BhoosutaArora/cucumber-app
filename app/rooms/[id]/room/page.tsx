@@ -22,6 +22,7 @@ export default function RoomPage() {
   const [kickVotes, setKickVotes] = useState<any[]>([])
   const [kickingId, setKickingId] = useState<string | null>(null)
   const [paymentLoading, setPaymentLoading] = useState(false)
+  const [hasPaidVideo, setHasPaidVideo] = useState(false)
 
   const [roomPosts, setRoomPosts] = useState<any[]>([])
   const [showFeedModal, setShowFeedModal] = useState(false)
@@ -59,6 +60,7 @@ export default function RoomPage() {
 
       if (!membership) { window.location.href = '/rooms/' + id; return }
       setMyMembership(membership)
+      setHasPaidVideo(membership.has_paid_video || false)
       if (!membership.is_ready) setShowPopup(true)
 
       const { data: roomData } = await supabase
@@ -75,7 +77,9 @@ export default function RoomPage() {
     }
     if (id) load()
 
-    return () => { document.body.removeChild(script) }
+    return () => {
+      try { document.body.removeChild(script) } catch (e) {}
+    }
   }, [id])
 
   async function loadMembers() {
@@ -168,30 +172,60 @@ export default function RoomPage() {
   }
 
   async function handleVideoCall() {
+    // If already paid — go directly to video call
+    if (hasPaidVideo) {
+      window.location.href = '/video-call'
+      return
+    }
+
     setPaymentLoading(true)
     try {
       const res = await fetch('/api/razorpay-order', { method: 'POST' })
       const { orderId, error } = await res.json()
-      if (error || !orderId) { alert('Payment setup failed. Please try again!'); setPaymentLoading(false); return }
+      if (error || !orderId) {
+        alert('Payment setup failed. Please try again!')
+        setPaymentLoading(false)
+        return
+      }
 
-      const { data: profile } = await supabase.from('profiles').select('username, email').eq('id', user.id).single()
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username, email')
+        .eq('id', user.id)
+        .single()
 
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: 3500,
         currency: 'INR',
         name: 'Cucumber Travel',
-        description: 'Video Call Token — Non refundable',
+        description: 'Video Call Token',
         image: '/favicon.ico',
         order_id: orderId,
-        prefill: { name: profile?.username || '', email: user?.email || '' },
+        prefill: {
+          name: profile?.username || '',
+          email: user?.email || '',
+        },
         theme: { color: '#4CAF50' },
-        handler: async function () {
-          alert('Payment successful! 🥒 Joining video call...')
+        handler: async function (response: any) {
+          // Mark as paid in database
+          await supabase
+            .from('room_members')
+            .update({ has_paid_video: true })
+            .eq('room_id', id)
+            .eq('user_id', user.id)
+
+          setHasPaidVideo(true)
           setPaymentLoading(false)
+
+          // Redirect immediately to video call
           window.location.href = '/video-call'
         },
-        modal: { ondismiss: function () { setPaymentLoading(false) } }
+        modal: {
+          ondismiss: function () {
+            setPaymentLoading(false)
+          }
+        }
       }
 
       const rzp = new window.Razorpay(options)
@@ -515,8 +549,11 @@ export default function RoomPage() {
             Group Chat
           </div>
           {room?.is_sealed ? (
-            <div onClick={!paymentLoading ? handleVideoCall : undefined} className={'py-4 rounded-2xl font-bold text-sm text-center transition-all cursor-pointer ' + (paymentLoading ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-green-400 to-green-500 text-white hover:shadow-lg')}>
-              {paymentLoading ? 'Opening...' : 'Video Call — ₹35'}
+            <div
+              onClick={!paymentLoading ? handleVideoCall : undefined}
+              className={'py-4 rounded-2xl font-bold text-sm text-center transition-all cursor-pointer ' + (paymentLoading ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-green-400 to-green-500 text-white hover:shadow-lg')}
+            >
+              {paymentLoading ? 'Opening...' : hasPaidVideo ? 'Join Video Call' : 'Video Call — ₹35'}
             </div>
           ) : (
             <div className="py-4 rounded-2xl bg-gray-100 text-gray-400 font-bold text-sm text-center cursor-not-allowed">
@@ -528,26 +565,34 @@ export default function RoomPage() {
         {/* TOKEN INFO */}
         {room?.is_sealed && (
           <div className="bg-green-50 rounded-2xl border border-green-100 p-4 mb-4">
-            <div className="text-xs text-green-700 font-semibold mb-2">About the ₹35 video call token</div>
-            <div className="text-xs text-gray-500 leading-relaxed mb-3">
-              Pay ₹35 to unlock a video call with your travel buddies before committing to the full trip payment.
+            <div className="text-xs text-green-700 font-semibold mb-2">
+              {hasPaidVideo ? 'You have unlocked the video call!' : 'About the ₹35 video call token'}
             </div>
-            <div className="border-t border-green-100 pt-3">
-              <div className="text-xs text-green-700 font-semibold mb-2">Refund Policy</div>
-              <div className="flex flex-col gap-1.5">
-                {[
-                  { icon: 'X', color: 'text-red-400', text: '₹35 token — non refundable' },
-                  { icon: 'V', color: 'text-green-500', text: 'Full trip — 90% back if cancelled 30+ days before' },
-                  { icon: '~', color: 'text-yellow-500', text: 'Full trip — 50% back if cancelled 15-30 days before' },
-                  { icon: 'X', color: 'text-red-400', text: 'No refund if cancelled less than 15 days before trip' },
-                ].map((item) => (
-                  <div key={item.text} className="flex items-center gap-2 text-xs text-gray-500">
-                    <span className={'font-bold ' + item.color}>{item.icon}</span>
-                    <span>{item.text}</span>
+            {hasPaidVideo ? (
+              <div className="text-xs text-gray-500">Click the Video Call button above to join your travel buddies!</div>
+            ) : (
+              <>
+                <div className="text-xs text-gray-500 leading-relaxed mb-3">
+                  Pay ₹35 to unlock a video call with your travel buddies before committing to the full trip.
+                </div>
+                <div className="border-t border-green-100 pt-3">
+                  <div className="text-xs text-green-700 font-semibold mb-2">Refund Policy</div>
+                  <div className="flex flex-col gap-1.5">
+                    {[
+                      { icon: 'X', color: 'text-red-400', text: '₹35 token — non refundable' },
+                      { icon: 'V', color: 'text-green-500', text: 'Full trip — 90% back if cancelled 30+ days before' },
+                      { icon: '~', color: 'text-yellow-500', text: 'Full trip — 50% back if cancelled 15-30 days before' },
+                      { icon: 'X', color: 'text-red-400', text: 'No refund if cancelled less than 15 days before trip' },
+                    ].map((item) => (
+                      <div key={item.text} className="flex items-center gap-2 text-xs text-gray-500">
+                        <span className={'font-bold ' + item.color}>{item.icon}</span>
+                        <span>{item.text}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
+              </>
+            )}
           </div>
         )}
 
