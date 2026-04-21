@@ -86,13 +86,13 @@ export default function JoinRoom() {
         <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-5 mb-4">
           <div className="text-lg font-extrabold text-yellow-800 mb-2">Before you join!</div>
           <ul className="text-sm text-yellow-700 space-y-2">
-            <li>✋ Be sure about who you travel with</li>
-            <li>👀 You will see member profiles after joining</li>
-            <li>🚪 You can leave within 24 hours for a full refund</li>
-            <li>✅ All members are ID verified by Cucumber</li>
-            <li>🥒 A Trip Captain will be present throughout</li>
-            <li>💬 Chat and video call before final payment</li>
-          </ul>
+  <li>✋ Be sure about who you travel with</li>
+  <li>👀 You will see member profiles after joining</li>
+  <li>✅ All members are verified by Cucumber</li>
+  <li>🎥 Pay ₹35 to unlock video call with your group</li>
+  <li>❌ ₹35 video call token is non refundable</li>
+  <li>💬 Chat with your travel buddies before the trip</li>
+</ul>
         </div>
 
         <div className="bg-white rounded-2xl border border-green-100 p-5 mb-4">
