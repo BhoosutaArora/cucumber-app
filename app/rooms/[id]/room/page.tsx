@@ -207,7 +207,7 @@ export default function RoomPage() {
         description: 'Video Call Token',
         image: '/favicon.ico',
         order_id: orderId,
-        callback_url: 'https://cucumbertravel.in/video-call?paid=true&room=' + id,
+       callback_url: 'https://cucumbertravel.in/api/payment-callback?room=' + id,
         redirect: true,
         prefill: { name: profile?.username || '', email: user?.email || '' },
         theme: { color: '#4CAF50' },
