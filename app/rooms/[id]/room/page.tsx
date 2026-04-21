@@ -207,12 +207,10 @@ export default function RoomPage() {
         description: 'Video Call Token',
         image: '/favicon.ico',
         order_id: orderId,
+        callback_url: 'https://cucumbertravel.in/video-call?paid=true&room=' + id,
+        redirect: true,
         prefill: { name: profile?.username || '', email: user?.email || '' },
         theme: { color: '#4CAF50' },
-        handler: function () {
-          // Redirect immediately — database update happens on video call page
-          window.location.href = '/video-call?paid=true&room=' + id
-        },
         modal: { ondismiss: function () { setPaymentLoading(false) } }
       }
 
@@ -254,12 +252,10 @@ export default function RoomPage() {
         description: 'Trip Payment — ' + room?.name,
         image: '/favicon.ico',
         order_id: orderId,
+        callback_url: 'https://cucumbertravel.in/booking-confirmed?room=' + id + '&paid=true',
+        redirect: true,
         prefill: { name: profile?.username || '', email: user?.email || '' },
         theme: { color: '#4CAF50' },
-        handler: function () {
-          // Redirect immediately — database update happens on confirmed page
-          window.location.href = '/booking-confirmed?room=' + id + '&paid=true&user=' + user.id
-        },
         modal: { ondismiss: function () { setPaymentLoading(false) } }
       }
 
@@ -349,7 +345,6 @@ export default function RoomPage() {
   return (
     <main className="min-h-screen bg-green-50 font-sans">
 
-      {/* WELCOME POPUP */}
       {showPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
           <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl">
@@ -368,7 +363,6 @@ export default function RoomPage() {
         </div>
       )}
 
-      {/* POST MODAL */}
       {showFeedModal && (
         <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/50 px-0 md:px-4">
           <div className="bg-white w-full md:max-w-lg rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl">
@@ -410,7 +404,6 @@ export default function RoomPage() {
         </div>
       )}
 
-      {/* NAVBAR */}
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 md:px-12 h-14 bg-white border-b border-green-100 shadow-sm">
         <a href="/" className="text-xl font-extrabold text-green-700 cursor-pointer">cucumber<span className="text-green-400">.</span></a>
         <a href="/rooms" className="text-sm font-semibold text-gray-500 hover:text-green-700 cursor-pointer">Back to Rooms</a>
@@ -418,7 +411,6 @@ export default function RoomPage() {
 
       <div className="pt-20 pb-16 px-4 md:px-16 max-w-3xl mx-auto">
 
-        {/* HEADER */}
         <div className="bg-gradient-to-r from-green-700 to-green-500 rounded-3xl p-6 mb-6 text-white relative overflow-hidden">
           <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
           <div className="relative z-10">
@@ -433,7 +425,6 @@ export default function RoomPage() {
           </div>
         </div>
 
-        {/* READY STATUS */}
         {!room?.is_sealed && (
           <div className="bg-white rounded-2xl border border-green-100 p-5 mb-4">
             <div className="flex items-center justify-between mb-3">
@@ -459,7 +450,6 @@ export default function RoomPage() {
           </div>
         )}
 
-        {/* TABS */}
         <div className="bg-white rounded-2xl border border-green-100 mb-4 overflow-hidden">
           <div className="flex border-b border-green-50">
             {[
@@ -487,7 +477,6 @@ export default function RoomPage() {
                     const votesAgainstMember = kickVotes.filter(v => v.target_id === member.user_id).length
                     const iHaveVoted = kickVotes.some(v => v.voter_id === user?.id && v.target_id === member.user_id)
                     const isMe = member.user_id === user?.id
-
                     return (
                       <div key={member.id} className="flex items-center gap-3 hover:bg-green-50 rounded-xl p-2 transition-all">
                         <div onClick={() => { window.location.href = '/profile/' + member.username }} className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold flex-shrink-0 cursor-pointer">
@@ -503,9 +492,7 @@ export default function RoomPage() {
                           )}
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
-                          {member.has_paid_full && (
-                            <span className="text-xs bg-yellow-100 text-yellow-700 font-bold px-2 py-1 rounded-full">Confirmed</span>
-                          )}
+                          {member.has_paid_full && <span className="text-xs bg-yellow-100 text-yellow-700 font-bold px-2 py-1 rounded-full">Confirmed</span>}
                           {member.is_ready ? (
                             <span className="text-xs bg-green-100 text-green-700 font-bold px-2 py-1 rounded-full">Ready</span>
                           ) : (
@@ -580,7 +567,6 @@ export default function RoomPage() {
           )}
         </div>
 
-        {/* CHAT + VIDEO */}
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div onClick={() => { window.location.href = '/chat' }} className="py-4 rounded-2xl bg-white border border-green-200 text-green-700 font-bold text-sm text-center hover:bg-green-50 transition-all cursor-pointer">
             Group Chat
@@ -599,7 +585,6 @@ export default function RoomPage() {
           )}
         </div>
 
-        {/* VIDEO TOKEN INFO */}
         {room?.is_sealed && !hasPaidVideo && (
           <div className="bg-green-50 rounded-2xl border border-green-100 p-4 mb-4">
             <div className="text-xs text-green-700 font-semibold mb-1">About the ₹35 video call token</div>
@@ -607,7 +592,6 @@ export default function RoomPage() {
           </div>
         )}
 
-        {/* FULL PAYMENT */}
         {room?.is_sealed && hasPaidVideo && !hasPaidFull && (
           <div className="bg-gradient-to-br from-green-600 to-green-400 rounded-2xl p-5 mb-4 text-white">
             <div className="font-extrabold text-lg mb-1">Confirm your spot!</div>
@@ -634,7 +618,6 @@ export default function RoomPage() {
           </div>
         )}
 
-        {/* CONFIRMED BANNER */}
         {hasPaidFull && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-5 mb-4">
             <div className="flex items-center gap-3">
@@ -647,7 +630,6 @@ export default function RoomPage() {
           </div>
         )}
 
-        {/* ITINERARY */}
         <div className="bg-white rounded-2xl border border-green-100 p-5 mb-4">
           <h2 className="font-bold text-gray-900 mb-3">{room?.is_sealed ? 'Full Itinerary' : 'Itinerary Preview'}</h2>
           {room?.itineraries ? (
@@ -669,7 +651,6 @@ export default function RoomPage() {
           )}
         </div>
 
-        {/* LEAVE ROOM */}
         <div className="bg-red-50 rounded-2xl border border-red-100 p-4">
           <div className="font-bold text-red-700 text-sm mb-1">Leave this room</div>
           <div className="text-xs text-red-500 mb-3">Leaving the room is permanent. Please be sure before leaving.</div>
