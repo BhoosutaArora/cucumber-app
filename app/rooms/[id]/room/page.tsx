@@ -23,6 +23,7 @@ export default function RoomPage() {
   const [kickingId, setKickingId] = useState<string | null>(null)
   const [paymentLoading, setPaymentLoading] = useState(false)
   const [hasPaidVideo, setHasPaidVideo] = useState(false)
+  const [hasPaidFull, setHasPaidFull] = useState(false)
 
   const [roomPosts, setRoomPosts] = useState<any[]>([])
   const [showFeedModal, setShowFeedModal] = useState(false)
@@ -61,6 +62,7 @@ export default function RoomPage() {
       if (!membership) { window.location.href = '/rooms/' + id; return }
       setMyMembership(membership)
       setHasPaidVideo(membership.has_paid_video || false)
+      setHasPaidFull(membership.has_paid_full || false)
       if (!membership.is_ready) setShowPopup(true)
 
       const { data: roomData } = await supabase
@@ -172,7 +174,6 @@ export default function RoomPage() {
   }
 
   async function handleVideoCall() {
-    // If already paid — go directly to video call
     if (hasPaidVideo) {
       window.location.href = '/video-call'
       return
@@ -180,7 +181,11 @@ export default function RoomPage() {
 
     setPaymentLoading(true)
     try {
-      const res = await fetch('/api/razorpay-order', { method: 'POST' })
+      const res = await fetch('/api/razorpay-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: 3500 })
+      })
       const { orderId, error } = await res.json()
       if (error || !orderId) {
         alert('Payment setup failed. Please try again!')
@@ -202,30 +207,72 @@ export default function RoomPage() {
         description: 'Video Call Token',
         image: '/favicon.ico',
         order_id: orderId,
-        prefill: {
-          name: profile?.username || '',
-          email: user?.email || '',
-        },
+        prefill: { name: profile?.username || '', email: user?.email || '' },
         theme: { color: '#4CAF50' },
-        handler: async function (response: any) {
-          // Mark as paid in database
+        handler: async function () {
           await supabase
             .from('room_members')
             .update({ has_paid_video: true })
             .eq('room_id', id)
             .eq('user_id', user.id)
-
           setHasPaidVideo(true)
           setPaymentLoading(false)
-
-          // Redirect immediately to video call
           window.location.href = '/video-call'
         },
-        modal: {
-          ondismiss: function () {
-            setPaymentLoading(false)
-          }
-        }
+        modal: { ondismiss: function () { setPaymentLoading(false) } }
+      }
+
+      const rzp = new window.Razorpay(options)
+      rzp.open()
+    } catch (err) {
+      console.error(err)
+      alert('Something went wrong. Please try again!')
+      setPaymentLoading(false)
+    }
+  }
+
+  async function handleFullPayment() {
+    setPaymentLoading(true)
+    try {
+      const res = await fetch('/api/razorpay-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: 299900 })
+      })
+      const { orderId, error } = await res.json()
+      if (error || !orderId) {
+        alert('Payment setup failed. Please try again!')
+        setPaymentLoading(false)
+        return
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username, email')
+        .eq('id', user.id)
+        .single()
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: 299900,
+        currency: 'INR',
+        name: 'Cucumber Travel',
+        description: 'Trip Payment — ' + room?.name,
+        image: '/favicon.ico',
+        order_id: orderId,
+        prefill: { name: profile?.username || '', email: user?.email || '' },
+        theme: { color: '#4CAF50' },
+        handler: async function () {
+          await supabase
+            .from('room_members')
+            .update({ has_paid_full: true })
+            .eq('room_id', id)
+            .eq('user_id', user.id)
+          setHasPaidFull(true)
+          setPaymentLoading(false)
+          window.location.href = '/rooms/' + id + '/confirmed'
+        },
+        modal: { ondismiss: function () { setPaymentLoading(false) } }
       }
 
       const rzp = new window.Razorpay(options)
@@ -390,6 +437,7 @@ export default function RoomPage() {
             <div className="flex items-center gap-2 mb-1">
               <div className="text-green-200 text-xs font-bold">YOU ARE A MEMBER</div>
               {room?.is_sealed && <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full font-bold">SEALED</span>}
+              {hasPaidFull && <span className="text-xs bg-yellow-400/80 text-yellow-900 px-2 py-0.5 rounded-full font-bold">CONFIRMED</span>}
             </div>
             <h1 className="text-2xl font-extrabold mb-1">{room?.name}</h1>
             <div className="text-green-200 text-sm">📍 {room?.destination}</div>
@@ -468,6 +516,9 @@ export default function RoomPage() {
                           )}
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
+                          {member.has_paid_full && (
+                            <span className="text-xs bg-yellow-100 text-yellow-700 font-bold px-2 py-1 rounded-full">Confirmed</span>
+                          )}
                           {member.is_ready ? (
                             <span className="text-xs bg-green-100 text-green-700 font-bold px-2 py-1 rounded-full">Ready</span>
                           ) : (
@@ -562,37 +613,51 @@ export default function RoomPage() {
           )}
         </div>
 
-        {/* TOKEN INFO */}
-        {room?.is_sealed && (
+        {/* VIDEO TOKEN INFO */}
+        {room?.is_sealed && !hasPaidVideo && (
           <div className="bg-green-50 rounded-2xl border border-green-100 p-4 mb-4">
-            <div className="text-xs text-green-700 font-semibold mb-2">
-              {hasPaidVideo ? 'You have unlocked the video call!' : 'About the ₹35 video call token'}
+            <div className="text-xs text-green-700 font-semibold mb-1">About the ₹35 video call token</div>
+            <div className="text-xs text-gray-500 leading-relaxed">Pay ₹35 to unlock a video call with your travel buddies. Non refundable.</div>
+          </div>
+        )}
+
+        {/* FULL PAYMENT */}
+        {room?.is_sealed && hasPaidVideo && !hasPaidFull && (
+          <div className="bg-gradient-to-br from-green-600 to-green-400 rounded-2xl p-5 mb-4 text-white">
+            <div className="font-extrabold text-lg mb-1">Confirm your spot!</div>
+            <div className="text-green-100 text-sm mb-4">You met your tribe. Now lock in your seat before it is gone.</div>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <div className="text-xs text-green-200">Trip payment</div>
+                <div className="text-3xl font-extrabold">₹2,999</div>
+              </div>
+              <div className="text-right">
+                <div className="text-xs text-green-200">Trip</div>
+                <div className="text-sm font-bold">{room?.name}</div>
+                <div className="text-xs text-green-200 mt-0.5">{room?.dates}</div>
+              </div>
             </div>
-            {hasPaidVideo ? (
-              <div className="text-xs text-gray-500">Click the Video Call button above to join your travel buddies!</div>
-            ) : (
-              <>
-                <div className="text-xs text-gray-500 leading-relaxed mb-3">
-                  Pay ₹35 to unlock a video call with your travel buddies before committing to the full trip.
-                </div>
-                <div className="border-t border-green-100 pt-3">
-                  <div className="text-xs text-green-700 font-semibold mb-2">Refund Policy</div>
-                  <div className="flex flex-col gap-1.5">
-                    {[
-                      { icon: 'X', color: 'text-red-400', text: '₹35 token — non refundable' },
-                      { icon: 'V', color: 'text-green-500', text: 'Full trip — 90% back if cancelled 30+ days before' },
-                      { icon: '~', color: 'text-yellow-500', text: 'Full trip — 50% back if cancelled 15-30 days before' },
-                      { icon: 'X', color: 'text-red-400', text: 'No refund if cancelled less than 15 days before trip' },
-                    ].map((item) => (
-                      <div key={item.text} className="flex items-center gap-2 text-xs text-gray-500">
-                        <span className={'font-bold ' + item.color}>{item.icon}</span>
-                        <span>{item.text}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
+            <button
+              onClick={handleFullPayment}
+              disabled={paymentLoading}
+              className="w-full py-4 rounded-2xl bg-white text-green-700 font-extrabold text-base hover:shadow-lg transition-all disabled:opacity-50 cursor-pointer"
+            >
+              {paymentLoading ? 'Opening...' : 'Pay ₹2,999 — Confirm My Spot'}
+            </button>
+            <div className="text-xs text-green-200 text-center mt-2">90% refund if cancelled 30+ days before trip</div>
+          </div>
+        )}
+
+        {/* CONFIRMED BANNER */}
+        {hasPaidFull && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-5 mb-4">
+            <div className="flex items-center gap-3">
+              <div className="text-3xl">🎉</div>
+              <div>
+                <div className="font-extrabold text-yellow-800 text-base">Your spot is confirmed!</div>
+                <div className="text-xs text-yellow-600 mt-0.5">We will WhatsApp you all the details soon. Get ready for an amazing trip!</div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -617,21 +682,6 @@ export default function RoomPage() {
             <p className="text-sm text-gray-400">Itinerary will be added by Cucumber team soon!</p>
           )}
         </div>
-
-        {/* WHAT IS INCLUDED */}
-        {room?.is_sealed && room?.itineraries?.includes && (
-          <div className="bg-white rounded-2xl border border-green-100 p-5 mb-4">
-            <h2 className="font-bold text-gray-900 mb-3">What is Included</h2>
-            <div className="grid grid-cols-2 gap-2">
-              {room.itineraries.includes.split(',').map((item: string) => (
-                <div key={item} className="flex items-center gap-2 text-sm text-gray-600">
-                  <span className="text-green-500">✓</span>
-                  <span>{item.trim()}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* LEAVE ROOM */}
         <div className="bg-red-50 rounded-2xl border border-red-100 p-4">

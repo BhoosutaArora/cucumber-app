@@ -1,20 +1,22 @@
 import Razorpay from 'razorpay'
 import { NextResponse } from 'next/server'
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
-    // Initialize inside function so env vars are loaded
+    const body = await request.json().catch(() => ({}))
+    const amount = body.amount || 3500 // default ₹35
+
     const razorpay = new Razorpay({
       key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
       key_secret: process.env.RAZORPAY_KEY_SECRET!,
     })
 
     const order = await razorpay.orders.create({
-      amount: 3500, // ₹35 in paise
+      amount: amount,
       currency: 'INR',
-      receipt: 'video_call_' + Date.now(),
+      receipt: 'cucumber_' + Date.now(),
       notes: {
-        purpose: 'Cucumber Video Call Token',
+        purpose: amount === 3500 ? 'Video Call Token' : 'Trip Payment',
       },
     })
 
