@@ -209,15 +209,9 @@ export default function RoomPage() {
         order_id: orderId,
         prefill: { name: profile?.username || '', email: user?.email || '' },
         theme: { color: '#4CAF50' },
-        handler: async function () {
-          await supabase
-            .from('room_members')
-            .update({ has_paid_video: true })
-            .eq('room_id', id)
-            .eq('user_id', user.id)
-          setHasPaidVideo(true)
-          setPaymentLoading(false)
-          window.location.href = '/video-call'
+        handler: function () {
+          // Redirect immediately — database update happens on video call page
+          window.location.href = '/video-call?paid=true&room=' + id
         },
         modal: { ondismiss: function () { setPaymentLoading(false) } }
       }
@@ -262,15 +256,9 @@ export default function RoomPage() {
         order_id: orderId,
         prefill: { name: profile?.username || '', email: user?.email || '' },
         theme: { color: '#4CAF50' },
-        handler: async function () {
-          await supabase
-            .from('room_members')
-            .update({ has_paid_full: true })
-            .eq('room_id', id)
-            .eq('user_id', user.id)
-          setHasPaidFull(true)
-          setPaymentLoading(false)
-          window.location.href = '/rooms/' + id + '/confirmed'
+        handler: function () {
+          // Redirect immediately — database update happens on confirmed page
+          window.location.href = '/booking-confirmed?room=' + id + '&paid=true&user=' + user.id
         },
         modal: { ondismiss: function () { setPaymentLoading(false) } }
       }
@@ -488,7 +476,6 @@ export default function RoomPage() {
             ))}
           </div>
 
-          {/* MEMBERS TAB */}
           {activeTab === 'members' && (
             <div className="p-5">
               <h2 className="font-bold text-gray-900 mb-4">Travel Buddies ({members.length})</h2>
@@ -543,7 +530,6 @@ export default function RoomPage() {
             </div>
           )}
 
-          {/* ROOM FEED TAB */}
           {activeTab === 'feed' && (
             <div className="p-5">
               <div className="flex items-center justify-between mb-4">
@@ -644,7 +630,7 @@ export default function RoomPage() {
             >
               {paymentLoading ? 'Opening...' : 'Pay ₹2,999 — Confirm My Spot'}
             </button>
-            <div className="text-xs text-green-200 text-center mt-2">70% refund if cancelled 5 days before trip</div>
+            <div className="text-xs text-green-200 text-center mt-2">90% refund if cancelled 30+ days before trip</div>
           </div>
         )}
 
