@@ -181,9 +181,7 @@ function BookingConfirmedContent() {
           <div className="font-bold text-yellow-800 text-sm mb-2">Refund Policy</div>
           <div className="flex flex-col gap-1.5">
             {[
-              { icon: 'V', color: 'text-green-500', text: '90% back if cancelled 30+ days before trip' },
-              { icon: '~', color: 'text-yellow-500', text: '50% back if cancelled 15-30 days before trip' },
-              { icon: 'X', color: 'text-red-400', text: 'No refund if cancelled less than 15 days before trip' },
+            { icon: '~', color: 'text-yellow-500', text: '70% back if cancelled 5 days before trip' },
             ].map((item) => (
               <div key={item.text} className="flex items-center gap-2 text-xs text-gray-600">
                 <span className={'font-bold ' + item.color}>{item.icon}</span>
