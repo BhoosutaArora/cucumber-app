@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useEffect, useState, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { supabase } from '../lib/supabase'
 import Navbar from '../components/Navbar'
 
-export default function BookingConfirmed() {
-  const params = useParams()
-  const id = params?.id as string
+function BookingConfirmedContent() {
+  const searchParams = useSearchParams()
+  const roomId = searchParams.get('room')
   const [user, setUser] = useState<any>(null)
   const [room, setRoom] = useState<any>(null)
   const [username, setUsername] = useState('')
@@ -26,12 +26,14 @@ export default function BookingConfirmed() {
         .single()
       setUsername(profile?.username || user.email?.split('@')[0] || 'Traveler')
 
-      const { data: roomData } = await supabase
-        .from('Rooms')
-        .select('*')
-        .eq('id', id)
-        .single()
-      setRoom(roomData)
+      if (roomId) {
+        const { data: roomData } = await supabase
+          .from('Rooms')
+          .select('*')
+          .eq('id', roomId)
+          .single()
+        setRoom(roomData)
+      }
 
       setLoading(false)
 
@@ -57,8 +59,8 @@ export default function BookingConfirmed() {
         }, i * 30)
       }
     }
-    if (id) init()
-  }, [id])
+    init()
+  }, [roomId])
 
   if (loading) {
     return (
@@ -194,7 +196,7 @@ export default function BookingConfirmed() {
         {/* CTA BUTTONS */}
         <div className="flex flex-col sm:flex-row gap-3">
           <a
-            href={'/rooms/' + id + '/room'}
+            href={'/rooms/' + roomId + '/room'}
             className="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-green-400 to-green-500 text-white font-bold text-sm text-center hover:shadow-lg hover:scale-105 transition-all shadow-md shadow-green-200"
           >
             Go to Room
@@ -213,5 +215,20 @@ export default function BookingConfirmed() {
 
       </div>
     </main>
+  )
+}
+
+export default function BookingConfirmed() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-green-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-5xl mb-4">🥒</div>
+          <div className="text-green-700 font-bold">Loading your confirmation...</div>
+        </div>
+      </div>
+    }>
+      <BookingConfirmedContent />
+    </Suspense>
   )
 }
