@@ -644,7 +644,7 @@ export default function RoomPage() {
             >
               {paymentLoading ? 'Opening...' : 'Pay ₹2,999 — Confirm My Spot'}
             </button>
-            <div className="text-xs text-green-200 text-center mt-2">90% refund if cancelled 30+ days before trip</div>
+            <div className="text-xs text-green-200 text-center mt-2">70% refund if cancelled 5 days before trip</div>
           </div>
         )}
 
