@@ -571,19 +571,18 @@ export default function RoomPage() {
           <div onClick={() => { window.location.href = '/chat' }} className="py-4 rounded-2xl bg-white border border-green-200 text-green-700 font-bold text-sm text-center hover:bg-green-50 transition-all cursor-pointer">
             Group Chat
           </div>
-          {room?.is_sealed ? (
-            <div
-              onClick={!paymentLoading ? handleVideoCall : undefined}
-              className={'py-4 rounded-2xl font-bold text-sm text-center transition-all cursor-pointer ' + (paymentLoading ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-green-400 to-green-500 text-white hover:shadow-lg')}
-            >
-              {paymentLoading ? 'Opening...' : hasPaidVideo ? 'Join Video Call' : 'Video Call — ₹35'}
-            </div>
-          ) : (
-            <div className="py-4 rounded-2xl bg-gray-100 text-gray-400 font-bold text-sm text-center cursor-not-allowed">
-              Video Call (Seal first)
-            </div>
-          )}
-        </div>
+         {room?.is_sealed ? (
+  <div
+    onClick={!paymentLoading ? handleVideoCall : undefined}
+    className={'py-4 rounded-2xl font-bold text-sm text-center transition-all cursor-pointer ' + (paymentLoading ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-green-400 to-green-500 text-white hover:shadow-lg')}
+  >
+    {paymentLoading ? 'Opening...' : hasPaidVideo ? 'Join Video Call' : 'Video Call — ₹35'}
+  </div>
+) : (
+  <div className="py-4 rounded-2xl bg-gray-100 text-gray-400 font-bold text-sm text-center cursor-not-allowed opacity-50">
+    🔒 Video Call Locked
+  </div>
+)}
 
         {room?.is_sealed && !hasPaidVideo && (
           <div className="bg-green-50 rounded-2xl border border-green-100 p-4 mb-4">
